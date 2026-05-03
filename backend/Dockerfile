@@ -14,7 +14,7 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV UV_SYSTEM_PYTHON=1
 ENV PYTHONUNBUFFERED=1 
  
-COPY pyproject.toml ./
+COPY pyproject.toml uv.lock ./
 RUN uv pip install --system --no-cache -r pyproject.toml
  
 RUN useradd -m -r appuser && \

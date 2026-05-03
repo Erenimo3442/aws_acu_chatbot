@@ -1,7 +1,7 @@
 import os
 from typing import Any
 
-from langchain_community.chat_models import ChatOllama
+from langchain_ollama import ChatOllama
 from langchain_core.documents import Document
 from langchain_core.messages import HumanMessage, SystemMessage
 
@@ -10,6 +10,7 @@ from rag.web_scrape_processor import WebScrapeProcessor
 
 _vsm = None
 _retriever = None
+
 
 
 def _ensure_runtime() -> tuple[Any, Any]:
