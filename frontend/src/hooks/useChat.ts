@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { HttpError } from '../lib/apiClient'
 import type { FeedbackReason, UiMessage } from '../models/chat'
 import { fetchCitationSource, fetchSessionHistory, sendFeedback, sendQuestion } from '../services/chatService'
-import type { Citation, SourceResponseData } from '../types/api'
+import type { AuthUser, Citation, SourceResponseData } from '../types/api'
 
 export function useChat() {
   const [question, setQuestion] = useState('')
@@ -16,6 +16,7 @@ export function useChat() {
   const [submittedFeedback, setSubmittedFeedback] = useState<Record<string, 'up' | 'down'>>({})
   const [selectedSource, setSelectedSource] = useState<SourceResponseData | null>(null)
   const [sourceLoading, setSourceLoading] = useState(false)
+  const [authUser, setAuthUser] = useState<AuthUser | null>(null)
 
   useEffect(() => {
     if (!retryAfter || retryAfter <= 0) {
@@ -145,6 +146,23 @@ export function useChat() {
     }
   }
 
+  function handleLogin(user: AuthUser) {
+    setAuthUser(user)
+    setErrorText(null)
+  }
+
+  async function handleLogout() {
+    try {
+      const { logout } = await import('../services/authService')
+      await logout()
+    } catch {
+      // Logout best-effort
+    }
+    setAuthUser(null)
+    setSessionId(null)
+    setMessages([])
+  }
+
   const sortedMessages = useMemo(
     () => [...messages].sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt)),
     [messages],
@@ -154,6 +172,7 @@ export function useChat() {
     question,
     setQuestion,
     sessionId,
+    authUser,
     pending,
     sortedMessages,
     errorText,
@@ -168,5 +187,7 @@ export function useChat() {
     submitQuestion,
     submitFeedback,
     loadSource,
+    handleLogin,
+    handleLogout,
   }
 }

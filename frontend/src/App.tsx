@@ -2,6 +2,7 @@ import type { FormEvent } from 'react'
 import type { Citation } from './types/api'
 import { useChat } from './hooks/useChat'
 import { ConversationPanel } from './components/ConversationPanel'
+import { LoginPage } from './components/LoginPage'
 import { Masthead } from './components/Masthead'
 import { SourcePanel } from './components/SourcePanel'
 import { StatusBar } from './components/StatusBar'
@@ -12,6 +13,7 @@ function App() {
     question,
     setQuestion,
     sessionId,
+    authUser,
     pending,
     sortedMessages,
     errorText,
@@ -26,7 +28,18 @@ function App() {
     submitQuestion,
     submitFeedback,
     loadSource,
+    handleLogin,
+    handleLogout,
   } = useChat()
+
+  if (!authUser) {
+    return (
+      <div className="page">
+        <Masthead />
+        <LoginPage onLogin={handleLogin} />
+      </div>
+    )
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -44,6 +57,11 @@ function App() {
   return (
     <main className="page">
       <Masthead />
+
+      <div className="auth-bar">
+        <span>Signed in as: {authUser.username}</span>
+        <button type="button" onClick={() => void handleLogout()}>Sign Out</button>
+      </div>
 
       <ConversationPanel
         sessionId={sessionId}
