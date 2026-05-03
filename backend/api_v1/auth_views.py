@@ -103,6 +103,7 @@ def register_view(request: HttpRequest):
     )
 
 
+@csrf_exempt
 @require_POST
 def logout_view(request: HttpRequest):
     """POST /api/v1/auth/logout — clear the session cookie."""

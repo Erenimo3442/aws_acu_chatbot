@@ -12,7 +12,8 @@ AWS ACU Chatbot is a container-first university assistant backend built with Dja
 
 ## Architecture (current)
 
-- `django-web`: Main backend service
+- `backend`: Main backend service
+- `frontend`: Main frontend service
 - `ollama`: LLM + embedding model runtime
 - `db`: PostgreSQL for relational data/chat history
 - `backend/chromadb-data`: Local persisted vector store directory mounted into the backend container
