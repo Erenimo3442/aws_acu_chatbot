@@ -32,7 +32,7 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app
-      - ./backend/chromadb-data:/app/chromadb-data
+      - chromadb_data:/app/chromadb-data
     depends_on:
       - db
       - ollama
@@ -77,3 +77,4 @@ volumes:
   postgres_data:
   ollama_data:
   frontend_node_modules:
+  chromadb_data:
