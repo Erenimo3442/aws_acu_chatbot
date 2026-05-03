@@ -5,6 +5,21 @@ import { formatDateTime } from '../utils/dateTime'
 import { MessageCitations } from './MessageCitations'
 import { MessageFeedback } from './MessageFeedback'
 
+function TypingIndicator() {
+  return (
+    <article className="message message-assistant typing-message" aria-label="Assistant is typing">
+      <div className="message-meta">
+        <span>ASSISTANT</span>
+      </div>
+      <div className="typing-indicator">
+        <span />
+        <span />
+        <span />
+      </div>
+    </article>
+  )
+}
+
 type ConversationPanelProps = {
   sessionId: string | null
   sortedMessages: UiMessage[]
@@ -108,6 +123,7 @@ export function ConversationPanel({
               )}
             </article>
           ))}
+          {pending && <TypingIndicator />}
         </div>
       )}
 

@@ -1,33 +1,34 @@
 FROM python:3.13-slim
 
-# Install `uv`
+# Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
-# Create the app directory
-RUN mkdir /app
- 
-# Set the working directory
 WORKDIR /app
- 
-# Set environment variables to optimize Python
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV UV_SYSTEM_PYTHON=1
+
+# Optimize Python and uv for container environments
 ENV PYTHONUNBUFFERED=1 
- 
-COPY pyproject.toml uv.lock ./
-RUN uv pip install --system --no-cache -r pyproject.toml
- 
+ENV UV_SYSTEM_PYTHON=1
+# Force bytecode compilation during the build for faster app startup
+ENV UV_COMPILE_BYTECODE=1 
+
+# Copy ONLY dependency files first to maximize Docker layer caching
+COPY pyproject.toml uv.lock* ./
+
+# Use BuildKit cache mounts to drastically speed up dependency installation on rebuilds
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv pip install --system -r pyproject.toml
+
+# Create a non-root user and set permissions early
 RUN useradd -m -r appuser && \
-   chown -R appuser /app
- 
-# Copy application code
+    chown -R appuser /app
+
+# Copy application code securely
 COPY --chown=appuser:appuser . .
- 
-# Switch to non-root user
+
+# Switch to the non-root user for execution
 USER appuser
- 
-# Expose the application port
-EXPOSE 8000 
+
+EXPOSE 8000
  
 # Start the application using Gunicorn
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
