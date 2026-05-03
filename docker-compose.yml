@@ -9,6 +9,7 @@ services:
       - ollama_data:/root/.ollama
     env_file:
       - .env
+    entrypoint: [ "/bin/bash", "-c", "ollama serve & sleep 5 && ollama pull $ACADEMIC_AGENT_MODEL_ID && wait" ]
 
   db:
     image: postgres:17

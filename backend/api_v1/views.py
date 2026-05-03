@@ -215,7 +215,7 @@ def chat(request: HttpRequest):
                     answer_text = candidate
             except Exception as e:
                 logger.error(f"RAG service error, using fallback answer: {str(e)}")
-                answer_text = "This path is active and ready for OLLAMA integration."
+                answer_text = f"I just errored {str(e)}"
 
             assistant_message = ChatMessage.objects.create(
                 session=chat_session,
