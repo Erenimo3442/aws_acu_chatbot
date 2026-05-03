@@ -5,8 +5,9 @@ import hashlib
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-from printmeup import printmeup as pm
+from logging import getLogger
 
+logger = getLogger(__name__)
 
 class WebScrapeProcessor:
     
@@ -132,7 +133,7 @@ class WebScrapeProcessor:
 
     def split_documents_into_chunks(self, documents: list[Document]) -> list[Document]:
         """Split documents into chunks."""
-        pm.deb(f"Splitting {len(documents)} documents into chunks...")
+        logger.debug(f"Splitting {len(documents)} documents into chunks...")
         if not documents:
             return []
 
@@ -141,7 +142,7 @@ class WebScrapeProcessor:
             chunk_overlap=self.default_chunk_overlap,
         )
         chunks = splitter.split_documents(documents)
-        pm.deb(f"{len(chunks)} chunks created")
+        logger.debug(f"{len(chunks)} chunks created")
         return chunks
 
     def process_all_documents(self) -> tuple[list[Document], int]:

@@ -1,4 +1,5 @@
 import json
+import logging
 
 from django.conf import settings
 from django.db import transaction
@@ -23,6 +24,8 @@ from .models import ChatMessage, ChatSession, Citation, Feedback, IngestJob, Sou
 from .rate_limit import check_rate_limit
 from .responses import error_response, success_response
 
+from logging import getLogger
+logger = getLogger(__name__)
 
 def _parse_json_body(request: HttpRequest):
     try:
@@ -140,6 +143,7 @@ def session_create(request: HttpRequest):
 @require_POST
 def chat(request: HttpRequest):
     try:
+        logger.info("Chat endpoint hit")
         context = resolve_auth_context(request)
         require_roles(context, {ROLE_ANONYMOUS, ROLE_STUDENT})
 
@@ -203,13 +207,14 @@ def chat(request: HttpRequest):
             )
 
             # Use shared RAG service module, but keep a deterministic fallback for local/test runs.
-            answer_text = "This path is active and ready for OLLAMA integration."
+            answer_text = "HELLO EREN"
             try:
                 rag_result = rag_services.generate_chat_answer(question)
                 candidate = str(rag_result.get("answer", "")).strip()
                 if candidate:
                     answer_text = candidate
-            except Exception:
+            except Exception as e:
+                logger.error(f"RAG service error, using fallback answer: {str(e)}")
                 answer_text = "This path is active and ready for OLLAMA integration."
 
             assistant_message = ChatMessage.objects.create(

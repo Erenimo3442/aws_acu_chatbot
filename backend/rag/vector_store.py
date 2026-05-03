@@ -7,8 +7,10 @@ from langchain_core.vectorstores import VectorStoreRetriever
 from typing import List
 import os
 
-import printmeup as pm
 from .web_scrape_processor import WebScrapeProcessor 
+
+from logging import getLogger
+logger = getLogger(__name__)
 
 VECTOR_STORE_PERSIST_DIR = os.getenv("VECTOR_STORE_PERSIST_DIR", "chromadb-data")
 HGF_EMBEDDING_MODEL_ID = os.getenv("HGF_EMBEDDING_MODEL_ID", "BAAI/bge-small-en-v1.5")
@@ -30,20 +32,20 @@ class VectorStoreManager:
         """Load existing vector store from persist directory."""
         try:
             if os.path.exists(self.persist_directory):
-                pm.deb(
+                logger.debug(
                     f"Loading existing Chroma database from {self.persist_directory}..."
                 )
                 self.vectorstore = Chroma(
                     persist_directory=self.persist_directory,
                     embedding_function=self.embeddings,
                 )
-                pm.inf("Existing vector store loaded")
+                logger.info("Existing vector store loaded")
                 return self.vectorstore
             else:
-                pm.deb(f"No existing vector store found at {self.persist_directory}")
+                logger.debug(f"No existing vector store found at {self.persist_directory}")
                 return None
         except Exception as e:
-            pm.err(e)
+            logger.error(e)
             return None
 
     def create_vectorstore(self, chunks: List[Document] | None = None) -> Chroma:
@@ -52,7 +54,7 @@ class VectorStoreManager:
         if not chunks or len(chunks) == 0:
             chunks, doc_count = self.web_scrape_processor.process_all_documents()
 
-        pm.inf(
+        logger.info(
             f"Creating new vector store at {self.persist_directory}, with {len(chunks)} chunks"
             + f" from {doc_count} documents."
             if doc_count
@@ -63,7 +65,7 @@ class VectorStoreManager:
             embedding=self.embeddings,
             persist_directory=self.persist_directory,
         )
-        pm.suc("New vector store created")
+        logger.info("New vector store created")
         return self.vectorstore
 
     def get_vector_store(self) -> Chroma:
@@ -75,7 +77,8 @@ class VectorStoreManager:
             return self.create_vectorstore()
 
     def add_chunks(self, chunks: List[Document]) -> bool:
-        """Add new chunks to the existing vector store (incremental).
+        """
+        Add new chunks to the existing vector store (incremental).
 
         Args:
             chunks: List of chunk objects to add.
@@ -83,20 +86,20 @@ class VectorStoreManager:
             True if successful, False otherwise.
         """
         if not chunks:
-            pm.war("No chunks to add to vector store")
+            logger.warning("No chunks to add to vector store")
             return False
 
         try:
-            pm.deb(f"Adding {len(chunks)} new chunks to existing vector store...")
+            logger.debug(f"Adding {len(chunks)} new chunks to existing vector store...")
             self.vectorstore.add_documents(chunks)
-            pm.deb(f"{len(chunks)} chunks added to vector store")
+            logger.debug(f"{len(chunks)} chunks added to vector store")
             return True
         except Exception as e:
-            pm.err(e=e, m="Failed to add documents to vector store")
+            logger.error("Failed to add documents to vector store")
             return False
 
     def add_documents(self, documents: List[Document]) -> bool:
-        pm.deb(f"Adding {len(documents)} new documents to vector store...")
+        logger.debug(f"Adding {len(documents)} new documents to vector store...")
         return self.add_chunks(self.web_scrape_processor.split_documents_into_chunks(documents))
 
     def similarity_search(self, query: str, k: int = 4) -> List[Document] | None:

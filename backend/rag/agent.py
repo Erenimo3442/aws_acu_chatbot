@@ -6,7 +6,10 @@ from langchain_community.chat_models import ChatOllama
 from langchain_core.vectorstores import VectorStoreRetriever
 from langchain.tools import tool
 
-from printmeup import printmeup as pm
+
+from logging import getLogger
+
+logger = getLogger(__name__)
 
 DEFAULT_ACADEMIC_AGENT_MODEL_ID = os.getenv("ACADEMIC_AGENT_MODEL_ID", "qwen2.5:3b")
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://ollama:11434")
@@ -53,7 +56,7 @@ def search_academic_documents(
 		return "academic document search is currently unavailable."
 
 	try:
-		pm.inf(f"Searching academic documents for: {query}")
+		logger.info(f"Searching academic documents for: {query}")
 		docs = retriever.invoke(query)
 
 		if not docs:
@@ -97,7 +100,7 @@ def search_academic_documents(
 
 		return "\n".join(result_parts)
 	except Exception as e:
-		pm.err(e=e, m=f"Error searching documents for '{query}'")
+		logger.error("Error searching documents for '{query}'")
 		return f"Error searching documents: {str(e)}"
 
 
@@ -121,5 +124,5 @@ def create_academic_agent(
 		tools=[search_academic_documents],
 		system_prompt=SYSTEM_PROMPT,
 	)
-	pm.suc("academic agent created")
+	logger.info("academic agent created")
 	return agent
