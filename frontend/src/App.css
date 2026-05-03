@@ -6,6 +6,18 @@
   position: relative;
 }
 
+.app-shell-fluid {
+  width: 100%;
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 1.25rem;
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(220px, 0.55fr) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
 .app-shell::before {
   content: '';
   position: fixed;
