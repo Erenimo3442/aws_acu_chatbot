@@ -1,7 +1,8 @@
 from django.urls import path
 
-from . import views
+from . import admin_views
 from . import auth_views
+from . import views
 
 
 urlpatterns = [
@@ -16,4 +17,5 @@ urlpatterns = [
     path("auth/register", auth_views.register_view, name="auth-register"),
     path("auth/logout", auth_views.logout_view, name="auth-logout"),
     path("auth/whoami", auth_views.whoami_view, name="auth-whoami"),
+    path("admin/dashboard", admin_views.admin_dashboard, name="admin-dashboard"),
 ]
