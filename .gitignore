@@ -35,7 +35,7 @@ dist/
 .DS_Store
 Thumbs.db
 .env
-
+.opencode
 .venv/
 uv.lock
 __pycache__/
