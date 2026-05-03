@@ -43,3 +43,6 @@ __pycache__/
 # Test files
 test_dedup.py
 test_chat.py
+
+# Git worktrees
+.worktrees/
