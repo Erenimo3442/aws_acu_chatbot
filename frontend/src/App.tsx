@@ -37,7 +37,7 @@ function App() {
 
   if (!authUser) {
     return (
-      <div className="page">
+      <div className="app-shell auth-shell">
         <Masthead />
         <LoginPage onLogin={handleLogin} />
       </div>
@@ -58,47 +58,53 @@ function App() {
   }
 
   return (
-    <main className="page">
-      <Masthead />
+    <div className="app-shell-fluid">
+      <aside className="sidebar-column">
+        <SessionSidebar
+          currentSessionId={sessionId}
+          onSelectSession={(id) => void switchSession(id)}
+          onNewChat={startNewChat}
+        />
+      </aside>
 
-      <div className="auth-bar">
-        <span>Signed in as: {authUser.username}</span>
-        <button type="button" onClick={() => void handleLogout()}>Sign Out</button>
-      </div>
+      <main className="main-column">
+        <header className="topbar">
+          <Masthead />
+          <div className="account-card" aria-label="Account status">
+            <span className="account-kicker">Signed in</span>
+            <strong>{authUser.username}</strong>
+            <button type="button" onClick={() => void handleLogout()}>Sign out</button>
+          </div>
+        </header>
 
-      <div className="main-layout">
-        <aside className="sidebar-column">
-          <SessionSidebar
-            currentSessionId={sessionId}
-            onSelectSession={(id) => void switchSession(id)}
-            onNewChat={startNewChat}
-          />
-        </aside>
+        <div className="workspace">
+          <section className="content-column">
+            <ConversationPanel
+              sessionId={sessionId}
+              sortedMessages={sortedMessages}
+              sourceLoading={sourceLoading}
+              feedbackReasonByMessage={feedbackReasonByMessage}
+              setFeedbackReasonByMessage={setFeedbackReasonByMessage}
+              feedbackCommentByMessage={feedbackCommentByMessage}
+              setFeedbackCommentByMessage={setFeedbackCommentByMessage}
+              submittedFeedback={submittedFeedback}
+              handleCitationClick={handleCitationClick}
+              handleFeedback={handleFeedback}
+              question={question}
+              setQuestion={setQuestion}
+              pending={pending}
+              handleSubmit={handleSubmit}
+            />
+          </section>
 
-        <section className="content-column">
-          <ConversationPanel
-            sessionId={sessionId}
-            sortedMessages={sortedMessages}
-            sourceLoading={sourceLoading}
-            feedbackReasonByMessage={feedbackReasonByMessage}
-            setFeedbackReasonByMessage={setFeedbackReasonByMessage}
-            feedbackCommentByMessage={feedbackCommentByMessage}
-            setFeedbackCommentByMessage={setFeedbackCommentByMessage}
-            submittedFeedback={submittedFeedback}
-            handleCitationClick={handleCitationClick}
-            handleFeedback={handleFeedback}
-            question={question}
-            setQuestion={setQuestion}
-            pending={pending}
-            handleSubmit={handleSubmit}
-          />
-        </section>
-      </div>
+          <aside className="evidence-column">
+            <SourcePanel sourceLoading={sourceLoading} selectedSource={selectedSource} />
+          </aside>
+        </div>
 
-      <SourcePanel sourceLoading={sourceLoading} selectedSource={selectedSource} />
-
-      <StatusBar errorText={errorText} retryAfter={retryAfter} />
-    </main>
+        <StatusBar errorText={errorText} retryAfter={retryAfter} />
+      </main>
+    </div>
   )
 }
 

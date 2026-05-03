@@ -39,8 +39,23 @@ export function LoginPage({ onLogin }: LoginPageProps) {
 
   return (
     <div className="login-page">
+      <section className="login-story" aria-label="Assistant overview">
+        <span className="login-pill">Light Glass AI Workspace</span>
+        <h2>Your ACU questions, answered with context.</h2>
+        <p>
+          Sign in to continue conversations, review previous sessions, and open cited sources
+          without leaving the assistant workspace.
+        </p>
+        <div className="login-feature-grid">
+          <span>Source-aware answers</span>
+          <span>Saved sessions</span>
+          <span>Fast student guidance</span>
+        </div>
+      </section>
+
       <div className="login-card">
-        <h2>{mode === 'login' ? 'Sign In' : 'Create Account'}</h2>
+        <p className="login-kicker">Welcome</p>
+        <h2>{mode === 'login' ? 'Sign in to ACU Assistant' : 'Create your ACU Assistant account'}</h2>
 
         {errorText && <div className="login-error" role="alert">{errorText}</div>}
 
@@ -95,7 +110,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
 
         <p className="login-anon">
           <button type="button" onClick={() => onLogin({ id: 0, username: 'Anonymous', role: 'anonymous' })}>
-            Continue as Guest
+            Continue as guest
           </button>
         </p>
       </div>

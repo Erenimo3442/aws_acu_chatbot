@@ -42,9 +42,12 @@ export function SessionSidebar({ currentSessionId, onSelectSession, onNewChat }:
   return (
     <aside className="session-sidebar">
       <div className="sidebar-header">
-        <h3>Sessions</h3>
+        <div>
+          <p className="sidebar-kicker">Workspace</p>
+          <h3>Sessions</h3>
+        </div>
         <button type="button" className="btn-new-chat" onClick={() => void handleNewChat()}>
-          + New Chat
+          New
         </button>
       </div>
 
@@ -61,7 +64,7 @@ export function SessionSidebar({ currentSessionId, onSelectSession, onNewChat }:
               onClick={() => onSelectSession(session.id)}
               title={session.id}
             >
-              <span className="session-id">{session.id.slice(0, 16)}...</span>
+              <span className="session-id">Session {session.id.slice(0, 8)}</span>
               <span className="session-preview">{session.last_message_preview.slice(0, 60) || 'Empty'}</span>
             </button>
           </li>

@@ -1,85 +1,106 @@
 .session-sidebar {
-  background: #0f3460;
-  border-right: 1px solid #1a1a2e;
-  padding: 0.75rem;
+  border-radius: 30px;
+  padding: 0.9rem;
   display: flex;
   flex-direction: column;
-  min-width: 220px;
-  max-width: 280px;
+  gap: 0.8rem;
+  max-height: calc(100vh - 12rem);
   overflow-y: auto;
 }
 
 .sidebar-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.75rem;
+  align-items: start;
+  gap: 0.75rem;
+}
+
+.sidebar-kicker {
+  margin: 0 0 0.2rem;
+  color: var(--cyan);
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
 }
 
 .sidebar-header h3 {
   margin: 0;
-  color: #e94560;
-  font-size: 0.95rem;
+  color: var(--text-strong);
+  font-size: 1.05rem;
+  letter-spacing: -0.03em;
 }
 
 .btn-new-chat {
-  background: #e94560;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.48rem 0.75rem;
+  background: linear-gradient(135deg, var(--blue), var(--violet));
   color: #fff;
-  border: none;
-  border-radius: 4px;
-  padding: 0.25rem 0.5rem;
   cursor: pointer;
-  font-size: 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 900;
+  box-shadow: 0 12px 26px rgba(37, 99, 235, 0.22);
 }
 
 .session-list {
   list-style: none;
   padding: 0;
   margin: 0;
-}
-
-.session-item {
-  margin-bottom: 0.25rem;
+  display: grid;
+  gap: 0.45rem;
 }
 
 .session-item button {
   width: 100%;
   text-align: left;
-  background: #16213e;
-  border: 1px solid #1a1a2e;
-  border-radius: 4px;
-  padding: 0.4rem 0.5rem;
-  color: #c0c0e0;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 18px;
+  padding: 0.65rem;
+  background: rgba(255, 255, 255, 0.58);
+  color: var(--text);
   cursor: pointer;
-  font-size: 0.75rem;
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 0.26rem;
 }
 
 .session-item button:hover {
-  background: #1a1a2e;
+  border-color: rgba(37, 99, 235, 0.32);
+  background: rgba(255, 255, 255, 0.85);
 }
 
 .session-active button {
-  border-color: #e94560;
+  border-color: rgba(37, 99, 235, 0.5);
+  background: linear-gradient(135deg, rgba(219, 234, 254, 0.9), rgba(237, 233, 254, 0.82));
 }
 
 .session-id {
-  font-family: monospace;
-  color: #e94560;
+  color: var(--text-strong);
+  font-weight: 900;
+  font-size: 0.82rem;
 }
 
 .session-preview {
-  color: #8080a0;
+  color: var(--text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: 0.76rem;
 }
 
 .sidebar-loading,
 .sidebar-empty {
-  color: #8080a0;
-  font-size: 0.75rem;
-  padding: 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  padding: 0.65rem;
+  border: 1px dashed rgba(148, 163, 184, 0.42);
+  border-radius: 18px;
+  margin: 0;
+}
+
+@media (max-width: 820px) {
+  .session-sidebar {
+    max-height: none;
+  }
 }

@@ -22,6 +22,13 @@ type ConversationPanelProps = {
   handleSubmit: (event: FormEvent<HTMLFormElement>) => Promise<void>
 }
 
+const promptSuggestions = [
+  'What are the application deadlines for new students?',
+  'How much is tuition for this semester?',
+  'Which documents do I need for admission?',
+  'Where can I find academic calendar dates?',
+]
+
 export function ConversationPanel({
   sessionId,
   sortedMessages,
@@ -38,50 +45,75 @@ export function ConversationPanel({
   pending,
   handleSubmit,
 }: ConversationPanelProps) {
+  const hasMessages = sortedMessages.length > 0
+
   return (
     <section className="panel chat-panel" aria-live="polite">
       <div className="panel-head">
-        <h2>Conversation</h2>
-        <p>{sessionId ? `Session: ${sessionId}` : 'Session will be created on first message'}</p>
+        <div>
+          <h2>{hasMessages ? 'Conversation' : 'Ask ACU Assistant'}</h2>
+          <p>{sessionId ? `Session: ${sessionId}` : 'A session will be created when you send your first message.'}</p>
+        </div>
       </div>
 
-      <div className="message-list">
-        {sortedMessages.length === 0 && (
-          <p className="placeholder">No messages yet. Ask about tuition, schedules, or deadlines.</p>
-        )}
-
-        {sortedMessages.map((message) => (
-          <article key={message.id} className={`message message-${message.role}`}>
-            <div className="message-meta">
-              <span>{message.role.toUpperCase()}</span>
-              <time dateTime={message.createdAt}>{formatDateTime(message.createdAt)}</time>
+      {!hasMessages ? (
+        <div className="chat-intro">
+          <div className="chat-intro-card">
+            <div className="assistant-orb" aria-hidden="true" />
+            <h2>What do you need to know today?</h2>
+            <p>
+              Ask about admissions, fees, academic dates, program details, or student services.
+              I will answer with source-aware context when citations are available.
+            </p>
+            <div className="prompt-chips" aria-label="Suggested questions">
+              {promptSuggestions.map((prompt) => (
+                <button
+                  key={prompt}
+                  type="button"
+                  className="prompt-chip"
+                  onClick={() => setQuestion(prompt)}
+                >
+                  {prompt}
+                </button>
+              ))}
             </div>
-            <p>{message.content}</p>
+          </div>
+        </div>
+      ) : (
+        <div className="message-list">
+          {sortedMessages.map((message) => (
+            <article key={message.id} className={`message message-${message.role}`}>
+              <div className="message-meta">
+                <span>{message.role.toUpperCase()}</span>
+                <time dateTime={message.createdAt}>{formatDateTime(message.createdAt)}</time>
+              </div>
+              <p>{message.content}</p>
 
-            <MessageCitations
-              citations={message.citations}
-              sourceLoading={sourceLoading}
-              onCitationClick={handleCitationClick}
-            />
-
-            {message.role === 'assistant' && (
-              <MessageFeedback
-                messageId={message.id}
-                feedbackReasonByMessage={feedbackReasonByMessage}
-                setFeedbackReasonByMessage={setFeedbackReasonByMessage}
-                feedbackCommentByMessage={feedbackCommentByMessage}
-                setFeedbackCommentByMessage={setFeedbackCommentByMessage}
-                submittedFeedback={submittedFeedback}
-                onFeedback={handleFeedback}
+              <MessageCitations
+                citations={message.citations}
+                sourceLoading={sourceLoading}
+                onCitationClick={handleCitationClick}
               />
-            )}
-          </article>
-        ))}
-      </div>
+
+              {message.role === 'assistant' && (
+                <MessageFeedback
+                  messageId={message.id}
+                  feedbackReasonByMessage={feedbackReasonByMessage}
+                  setFeedbackReasonByMessage={setFeedbackReasonByMessage}
+                  feedbackCommentByMessage={feedbackCommentByMessage}
+                  setFeedbackCommentByMessage={setFeedbackCommentByMessage}
+                  submittedFeedback={submittedFeedback}
+                  onFeedback={handleFeedback}
+                />
+              )}
+            </article>
+          ))}
+        </div>
+      )}
 
       <form className="composer" onSubmit={(event) => void handleSubmit(event)}>
         <label htmlFor="question-input" className="caption">
-          Ask a question
+          Message ACU Assistant
         </label>
         <textarea
           id="question-input"
@@ -89,12 +121,12 @@ export function ConversationPanel({
           value={question}
           maxLength={4000}
           onChange={(event) => setQuestion(event.target.value)}
-          placeholder="Example: What is the application deadline for transfer students?"
+          placeholder="Ask about admissions, tuition, schedules, deadlines, or student services..."
         />
         <div className="composer-row">
-          <span>{question.trim().length}/4000</span>
+          <span>{question.trim().length}/4000 characters</span>
           <button type="submit" disabled={pending || !question.trim()}>
-            {pending ? 'Sending...' : 'Send'}
+            {pending ? 'Thinking...' : 'Send message'}
           </button>
         </div>
       </form>

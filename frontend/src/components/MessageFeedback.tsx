@@ -30,7 +30,8 @@ export function MessageFeedback({
             const nextValue = event.target.value
             setFeedbackReasonByMessage((current) => {
               if (!nextValue) {
-                const { [messageId]: _removed, ...rest } = current
+                const rest = { ...current }
+                delete rest[messageId]
                 return rest
               }
               return {
