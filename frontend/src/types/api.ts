@@ -116,3 +116,40 @@ export type SourceResponseData = {
   page: number | null
   doc_metadata: Record<string, unknown>
 }
+
+/** Auth request bodies */
+export type LoginRequest = {
+  username: string
+  password: string
+}
+
+export type RegisterRequest = {
+  username: string
+  password: string
+  email?: string
+}
+
+export type AuthUser = {
+  id: number
+  username: string
+  role: string
+  is_staff?: boolean
+}
+
+export type LoginResponseData = {
+  user: AuthUser
+}
+
+export type RegisterResponseData = {
+  user: AuthUser
+}
+
+export type WhoamiResponseData = {
+  authenticated: boolean
+  role: string
+  user?: AuthUser | null
+}
+
+export type LogoutResponseData = {
+  message: string
+}

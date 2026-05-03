@@ -5,8 +5,14 @@ import type {
   ChatResponseData,
   FeedbackRequest,
   FeedbackResponseData,
+  LoginRequest,
+  LoginResponseData,
+  LogoutResponseData,
+  RegisterRequest,
+  RegisterResponseData,
   SessionMessagesResponseData,
   SourceResponseData,
+  WhoamiResponseData,
 } from '../types/api'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1'
@@ -103,4 +109,30 @@ export function getSourceById(sourceId: string, chunkId?: string) {
   const query = params.toString()
   const suffix = query ? `?${query}` : ''
   return request<SourceResponseData>(`/sources/${encodeURIComponent(sourceId)}${suffix}`)
+}
+
+export function postLogin(payload: LoginRequest) {
+  return request<LoginResponseData>('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
+export function postRegister(payload: RegisterRequest) {
+  return request<RegisterResponseData>('/auth/register', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
+export function postLogout() {
+  return request<LogoutResponseData>('/auth/logout', {
+    method: 'POST',
+  })
+}
+
+export function getWhoami() {
+  return request<WhoamiResponseData>('/auth/whoami', {
+    method: 'POST',
+  })
 }
