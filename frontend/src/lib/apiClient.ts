@@ -136,3 +136,22 @@ export function getWhoami() {
     method: 'POST',
   })
 }
+
+export type SessionListItem = {
+  id: string
+  created_at: string
+  updated_at: string
+  status: string
+  owner_type: string
+  last_message_preview: string
+}
+
+export function getSessionList() {
+  return request<{ sessions: SessionListItem[] }>('/sessions?limit=20')
+}
+
+export function postCreateSession() {
+  return request<{ session: { id: string; created_at: string; status: string } }>('/sessions/create', {
+    method: 'POST',
+  })
+}

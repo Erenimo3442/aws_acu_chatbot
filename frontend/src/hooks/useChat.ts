@@ -104,6 +104,17 @@ export function useChat() {
     }
   }
 
+  function startNewChat() {
+    setSessionId(null)
+    setMessages([])
+    setErrorText(null)
+  }
+
+  async function switchSession(targetSessionId: string) {
+    setSessionId(targetSessionId)
+    await loadHistory(targetSessionId)
+  }
+
   async function submitFeedback(messageId: string, rating: 'up' | 'down') {
     if (!sessionId || submittedFeedback[messageId]) {
       return
@@ -189,5 +200,7 @@ export function useChat() {
     loadSource,
     handleLogin,
     handleLogout,
+    startNewChat,
+    switchSession,
   }
 }

@@ -4,6 +4,7 @@ import { useChat } from './hooks/useChat'
 import { ConversationPanel } from './components/ConversationPanel'
 import { LoginPage } from './components/LoginPage'
 import { Masthead } from './components/Masthead'
+import { SessionSidebar } from './components/SessionSidebar'
 import { SourcePanel } from './components/SourcePanel'
 import { StatusBar } from './components/StatusBar'
 import './App.css'
@@ -30,6 +31,8 @@ function App() {
     loadSource,
     handleLogin,
     handleLogout,
+    startNewChat,
+    switchSession,
   } = useChat()
 
   if (!authUser) {
@@ -63,22 +66,34 @@ function App() {
         <button type="button" onClick={() => void handleLogout()}>Sign Out</button>
       </div>
 
-      <ConversationPanel
-        sessionId={sessionId}
-        sortedMessages={sortedMessages}
-        sourceLoading={sourceLoading}
-        feedbackReasonByMessage={feedbackReasonByMessage}
-        setFeedbackReasonByMessage={setFeedbackReasonByMessage}
-        feedbackCommentByMessage={feedbackCommentByMessage}
-        setFeedbackCommentByMessage={setFeedbackCommentByMessage}
-        submittedFeedback={submittedFeedback}
-        handleCitationClick={handleCitationClick}
-        handleFeedback={handleFeedback}
-        question={question}
-        setQuestion={setQuestion}
-        pending={pending}
-        handleSubmit={handleSubmit}
-      />
+      <div className="main-layout">
+        <aside className="sidebar-column">
+          <SessionSidebar
+            currentSessionId={sessionId}
+            onSelectSession={(id) => void switchSession(id)}
+            onNewChat={startNewChat}
+          />
+        </aside>
+
+        <section className="content-column">
+          <ConversationPanel
+            sessionId={sessionId}
+            sortedMessages={sortedMessages}
+            sourceLoading={sourceLoading}
+            feedbackReasonByMessage={feedbackReasonByMessage}
+            setFeedbackReasonByMessage={setFeedbackReasonByMessage}
+            feedbackCommentByMessage={feedbackCommentByMessage}
+            setFeedbackCommentByMessage={setFeedbackCommentByMessage}
+            submittedFeedback={submittedFeedback}
+            handleCitationClick={handleCitationClick}
+            handleFeedback={handleFeedback}
+            question={question}
+            setQuestion={setQuestion}
+            pending={pending}
+            handleSubmit={handleSubmit}
+          />
+        </section>
+      </div>
 
       <SourcePanel sourceLoading={sourceLoading} selectedSource={selectedSource} />
 

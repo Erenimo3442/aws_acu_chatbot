@@ -58,6 +58,84 @@ def _serialize_message_for_history(message: ChatMessage):
     return data
 
 
+@require_GET
+def session_list(request: HttpRequest):
+    """GET /api/v1/sessions — list sessions for the authenticated user."""
+    try:
+        context = resolve_auth_context(request)
+        require_roles(context, {ROLE_ANONYMOUS, ROLE_STUDENT})
+
+        if context.role == ROLE_STUDENT:
+            queryset = ChatSession.objects.filter(
+                owner_type=ChatSession.OWNER_STUDENT,
+                owner_user=context.user,
+            ).order_by("-updated_at")
+        else:
+            session_key = ensure_session_key(request)
+            queryset = ChatSession.objects.filter(
+                owner_type=ChatSession.OWNER_ANON,
+                anonymous_session_key=session_key,
+            ).order_by("-updated_at")
+
+        try:
+            limit = min(int(request.GET.get("limit", 20)), 50)
+        except ValueError:
+            limit = 20
+
+        sessions = queryset[:limit]
+        session_data = []
+        for s in sessions:
+            last_msg = s.last_message
+            session_data.append({
+                "id": s.id,
+                "created_at": s.created_at.isoformat().replace("+00:00", "Z"),
+                "updated_at": s.updated_at.isoformat().replace("+00:00", "Z"),
+                "status": s.status,
+                "owner_type": s.owner_type,
+                "last_message_preview": last_msg.content[:120] if last_msg else "",
+            })
+
+        return success_response(request, {"sessions": session_data}, status=200)
+    except ApiError as exc:
+        return error_response(request, exc.status, exc.code, exc.message, exc.details, exc.retryable)
+
+
+@csrf_exempt
+@require_POST
+def session_create(request: HttpRequest):
+    """POST /api/v1/sessions/create — explicitly create a new empty session."""
+    try:
+        context = resolve_auth_context(request)
+        require_roles(context, {ROLE_ANONYMOUS, ROLE_STUDENT})
+
+        with transaction.atomic():
+            if context.role == ROLE_STUDENT:
+                chat_session = ChatSession.objects.create(
+                    owner_type=ChatSession.OWNER_STUDENT,
+                    owner_user=context.user,
+                )
+            else:
+                session_key = ensure_session_key(request)
+                chat_session = ChatSession.objects.create(
+                    owner_type=ChatSession.OWNER_ANON,
+                    anonymous_session_key=session_key,
+                )
+
+        return success_response(
+            request,
+            {
+                "session": {
+                    "id": chat_session.id,
+                    "created_at": chat_session.created_at.isoformat().replace("+00:00", "Z"),
+                    "status": chat_session.status,
+                }
+            },
+            status=201,
+        )
+    except ApiError as exc:
+        return error_response(request, exc.status, exc.code, exc.message, exc.details, exc.retryable)
+
+
 @csrf_exempt
 @require_POST
 def chat(request: HttpRequest):
