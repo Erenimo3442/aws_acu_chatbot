@@ -21,7 +21,8 @@ export function MessageFeedback({
   onFeedback,
 }: MessageFeedbackProps) {
   return (
-    <div className="feedback-box">
+    <fieldset className="feedback-box">
+      <legend className="caption">Feedback</legend>
       <label>
         Reason
         <select
@@ -65,6 +66,7 @@ export function MessageFeedback({
         <button
           type="button"
           className="small"
+          aria-pressed={submittedFeedback[messageId] === 'up'}
           onClick={() => {
             void onFeedback(messageId, 'up')
           }}
@@ -75,6 +77,7 @@ export function MessageFeedback({
         <button
           type="button"
           className="small ghost"
+          aria-pressed={submittedFeedback[messageId] === 'down'}
           onClick={() => {
             void onFeedback(messageId, 'down')
           }}
@@ -84,6 +87,6 @@ export function MessageFeedback({
         </button>
         {submittedFeedback[messageId] && <span className="feedback-status">Feedback saved</span>}
       </div>
-    </div>
+    </fieldset>
   )
 }
