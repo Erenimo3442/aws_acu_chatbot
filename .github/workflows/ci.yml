@@ -105,6 +105,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./backend
+          file: ./backend/Dockerfile
           push: false
           tags: aws-acu-chatbot-backend:test
           cache-from: type=gha
@@ -114,6 +115,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./frontend
+          file: ./frontend/Dockerfile
           push: false
           tags: aws-acu-chatbot-frontend:test
           cache-from: type=gha

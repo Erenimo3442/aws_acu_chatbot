@@ -25,6 +25,8 @@ The project uses **GitHub Actions** for continuous integration. The pipeline aut
 - ✅ Backend Docker image builds successfully
 - ✅ Frontend Docker image builds successfully
 
+**Note:** The frontend Dockerfile is for CI/CD and production builds. For local development, docker-compose uses the base `node:20-alpine` image with volume mounts for hot-reload.
+
 ## Files Added
 
 ```
@@ -39,6 +41,7 @@ backend/
     └── test_smoke.py       # Basic smoke tests
 
 frontend/
+├── Dockerfile              # Production Docker build configuration
 ├── vitest.config.ts        # Vitest test configuration
 ├── src/__tests__/
 │   └── App.test.tsx        # Sample test file

@@ -84,7 +84,12 @@ Ran 33 tests in 8.651s
 - ⚠️ Needs `npm install` to update lock file
 
 ### Docker Build
-**Status:** Ready to test once frontend dependencies are resolved
+**Status:** Ready to test
+
+**Configuration:**
+- ✅ Backend Dockerfile exists
+- ✅ Frontend Dockerfile created (production build with nginx)
+- ✅ CI configured to build both images
 
 ## 🚀 Next Steps
 

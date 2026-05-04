@@ -66,6 +66,36 @@ docker compose exec ollama ollama pull nomic-embed-text-v2-moe
 - Host execution may fail for service hostnames such as `ollama`.
 - Keep environment variables aligned with Docker networking.
 
+## Testing
+
+### Run All Tests Locally
+
+```bash
+bash test.sh
+```
+
+### Individual Test Commands
+
+```bash
+# Backend tests
+docker compose exec backend python manage.py test
+
+# Frontend tests
+docker compose exec frontend npm run test
+
+# Frontend linting
+docker compose exec frontend npm run lint
+```
+
+### CI/CD
+
+The project uses GitHub Actions for continuous integration. The pipeline runs:
+- Backend tests with PostgreSQL
+- Frontend linting and tests
+- Docker image builds
+
+See `CI_QUICK_REFERENCE.md` for quick commands or `CI_CD_SETUP.md` for complete documentation.
+
 ## API contract quick reference (v1)
 
 - Auth/access matrix: `backend/README.md`.
