@@ -155,18 +155,24 @@ BOLOGNA_PROGRAM_SUBPAGES: list[dict] = [
     {"func": "progProfile", "label": "Profile of the Programme"},
     {"func": "progOfficials", "label": "Programme Director or Equivalent"},
     {"func": "progDegree", "label": "Qualification Awarded"},
+    {"func": "progAbout", "label": "About Programme"},
     {"func": "progAdmissionReq", "label": "Specific Admission Requirements"},
     {"func": "progAccessFurhterStudies", "label": "Access to Further Studies"},
     {"func": "progGraduationReq", "label": "Graduation Requirements"},
-    {"func": "progRecogPriorLearning", "label": "Recognition of Prior Learning"},
-    {"func": "progQualifyReqReg", "label": "Qualification Req. and Regulations"},
     {"func": "progOccupationalProf", "label": "Occupational Profiles of Graduates"},
     {"func": "progLearnOutcomes", "label": "Program Learning Outcomes"},
     {"func": "progCourses", "label": "Course Structure"},
-    {"func": "progCourseMatrix", "label": "Course & Programme Outcomes Matrix"},
-    {"func": "progTYYCMatrix", "label": "NQF - Fields & Programme Outcomes Matrix"},
     {"func": "progAcademicStaff", "label": "Academic Staff"},
     {"func": "progContact", "label": "Contact Information"},
+    # Heavy / low Q&A value — uncomment if needed:
+    # {"func": "progGoalsObjectives", "label": "Type of Education (Goal) and Objectives"},
+    # {"func": "progProfile", "label": "Profile of the Programme"},
+    # {"func": "progOfficials", "label": "Programme Director or Equivalent"},
+    # {"func": "progDegree", "label": "Qualification Awarded"},
+    # {"func": "progRecogPriorLearning", "label": "Recognition of Prior Learning"},
+    # {"func": "progQualifyReqReg", "label": "Qualification Req. and Regulations"},
+    # {"func": "progCourseMatrix", "label": "Course & Programme Outcomes Matrix"},
+    # {"func": "progTYYCMatrix", "label": "NQF - Fields & Programme Outcomes Matrix"},
 ]
 
 
