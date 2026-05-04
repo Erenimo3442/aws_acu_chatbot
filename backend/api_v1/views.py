@@ -206,11 +206,20 @@ def chat(request: HttpRequest):
                 content=question,
             )
 
-            # Use shared RAG service module, but keep a deterministic fallback for local/test runs.
+            # Retrieve the last 6 messages (excluding the one just created) to form the context memory
+            history_qs = ChatMessage.objects.filter(session=chat_session).order_by('created_at')
+            history_payload = []
+            for m in list(history_qs)[-7:-1]:
+                history_payload.append({
+                    "role": "assistant" if m.role == ChatMessage.ROLE_ASSISTANT else "user",
+                    "content": m.content
+                })
+
+            # Use shared RAG service module, passing the memory payload
             answer_text = "This is a test message"
             citation_data: list[dict] = []
             try:
-                rag_result = rag_services.generate_chat_answer(question)
+                rag_result = rag_services.generate_chat_answer(question, history=history_payload)
                 candidate = str(rag_result.get("answer", "")).strip()
                 if candidate:
                     answer_text = candidate

@@ -3,7 +3,7 @@ from typing import Any
 
 from langchain_ollama import ChatOllama
 from langchain_core.documents import Document
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 
 from rag.vector_store import init_vector_store_manager
 from rag.web_scrape_processor import WebScrapeProcessor
@@ -88,7 +88,7 @@ def ingest_demo_seed() -> dict:
     }
 
 
-def generate_chat_answer(question: str) -> dict:
+def generate_chat_answer(question: str, history: list = None) -> dict:
     cleaned_question = str(question).strip()
     if not cleaned_question:
         raise ValueError("question is required")
@@ -110,25 +110,35 @@ def generate_chat_answer(question: str) -> dict:
         temperature=0,
     )
 
-    try:
-        response = model.invoke(
-            [
-                SystemMessage(
-                    content=(
-                        "You are an academic assistant for Acibadem University. "
-                        "Answer using the provided context. If context is insufficient, say that clearly. "
-                        "Keep the answer concise and factual."
-                    )
-                ),
-                HumanMessage(
-                    content=(
-                        f"Question: {cleaned_question}\n\n"
-                        f"Context:\n{context_text}\n\n"
-                        "Provide a helpful answer and refer to source names naturally."
-                    )
-                ),
-            ]
+    messages = [
+        SystemMessage(
+            content=(
+                "You are an academic assistant for Acibadem University. "
+                "Answer using the provided context. If context is insufficient, say that clearly. "
+                "Keep the answer concise and factual. Remember the previous messages in the conversation."
+            )
         )
+    ]
+    
+    if history:
+        for msg in history:
+            if msg.get("role") == "user":
+                messages.append(HumanMessage(content=msg.get("content", "")))
+            elif msg.get("role") == "assistant":
+                messages.append(AIMessage(content=msg.get("content", "")))
+                
+    messages.append(
+        HumanMessage(
+            content=(
+                f"Question: {cleaned_question}\n\n"
+                f"Context:\n{context_text}\n\n"
+                "Provide a helpful answer and refer to source names naturally."
+            )
+        )
+    )
+
+    try:
+        response = model.invoke(messages)
         answer_text = str(getattr(response, "content", "")).strip()
     except Exception as e:
         # Graceful fallback if Ollama model is down or timeouts
