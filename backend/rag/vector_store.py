@@ -90,6 +90,16 @@ class VectorStoreManager:
             return False
 
         try:
+            logger.info("Adding %d new chunks to existing vector store...", len(chunks))
+            self.vectorstore.add_documents(chunks)
+            logger.info("%d chunks added to vector store", len(chunks))
+            return True
+        except Exception as e:
+            logger.error("Failed to add documents to vector store: %s (%s)",
+                         type(e).__name__, e)
+            return False
+
+        try:
             logger.debug(f"Adding {len(chunks)} new chunks to existing vector store...")
             self.vectorstore.add_documents(chunks)
             logger.debug(f"{len(chunks)} chunks added to vector store")

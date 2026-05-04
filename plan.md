@@ -774,7 +774,7 @@ git commit -m "chore: Sprint 1 integration validation complete"
 
 # Sprint 2: Web Scraping Pipeline + Evaluation Framework
 
-**Goal:** Scrape 3-5 real university pages, add retrieval confidence thresholds with fallback responses, build a reusable evaluation runner, and score the system against the 10-question evaluation set from the proposal.
+**Goal:** Scrape 3-5 real university pages, add retrieval confidence thresholds with fallback responses, build a reusable evaluation runner, and score the system against the 15-question evaluation set from the proposal.
 
 ## Task 2.1: Build multi-page scraper script
 
@@ -997,65 +997,101 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from rag.api_views import generate_chat_answer
 
 EVALUATION_QUESTIONS = [
+    # --- Admissions ---
     {
         "id": "q1",
-        "question": "What are the tuition payment deadlines?",
+        "question": "What are the admission requirements for international students at Acibadem University?",
         "expected_accuracy": "correct_grounded",
-        "category": "finance",
+        "category": "admissions",
     },
     {
         "id": "q2",
-        "question": "What are the library opening hours on weekdays?",
+        "question": "Is there an English proficiency requirement (TOEFL/IELTS) for programs taught in English?",
         "expected_accuracy": "correct_grounded",
-        "category": "campus_services",
+        "category": "admissions",
     },
     {
         "id": "q3",
-        "question": "How can I request an AWS ACU quota extension?",
+        "question": "What is the application deadline for the fall semester?",
         "expected_accuracy": "correct_grounded",
-        "category": "aws_acu",
+        "category": "admissions",
     },
+    # --- Programs ---
     {
         "id": "q4",
-        "question": "Who can access the ingest endpoint in API v1?",
+        "question": "What undergraduate programs does Acibadem University offer in English?",
         "expected_accuracy": "correct_grounded",
-        "category": "api_access",
+        "category": "programs",
     },
     {
         "id": "q5",
-        "question": "Can anonymous users submit feedback on assistant messages?",
+        "question": "Does Acibadem University have a Medicine program? What is its duration?",
         "expected_accuracy": "correct_grounded",
-        "category": "api_access",
+        "category": "programs",
     },
     {
         "id": "q6",
-        "question": "How does rate limiting work for chat requests?",
+        "question": "What is the difference between Turkish-medium and English-medium programs?",
         "expected_accuracy": "correct_grounded",
-        "category": "api_access",
+        "category": "programs",
     },
+    # --- Tuition & Scholarships ---
     {
         "id": "q7",
-        "question": "What data is stored for each chat session?",
+        "question": "What is the annual tuition fee for the Medicine program?",
         "expected_accuracy": "correct_grounded",
-        "category": "api_access",
+        "category": "tuition",
     },
     {
         "id": "q8",
-        "question": "What should I do if no citation is available for an answer?",
-        "expected_accuracy": "safe_transparent",
-        "category": "safety",
+        "question": "Does Acibadem University offer merit-based scholarships? What are the conditions?",
+        "expected_accuracy": "correct_grounded",
+        "category": "tuition",
     },
+    # --- Campus & Student Life ---
     {
         "id": "q9",
-        "question": "Where can I find source drill-down details by source id?",
+        "question": "Does Acibadem University provide on-campus housing or dormitories?",
         "expected_accuracy": "correct_grounded",
-        "category": "api_access",
+        "category": "campus_life",
     },
     {
         "id": "q10",
-        "question": "What is the difference between chat answer generation and retrieval?",
+        "question": "Where is Acibadem University located? What is the campus address?",
         "expected_accuracy": "correct_grounded",
-        "category": "system_understanding",
+        "category": "campus_life",
+    },
+    # --- Student Services ---
+    {
+        "id": "q11",
+        "question": "How does the course registration process work?",
+        "expected_accuracy": "correct_grounded",
+        "category": "student_services",
+    },
+    {
+        "id": "q12",
+        "question": "Does the university have a library? What are its hours and online resources?",
+        "expected_accuracy": "correct_grounded",
+        "category": "student_services",
+    },
+    # --- Edge Cases ---
+    {
+        "id": "q13",
+        "question": "What is the best university in Turkey?",
+        "expected_accuracy": "safe_transparent",
+        "category": "edge_case",
+    },
+    {
+        "id": "q14",
+        "question": "How do I apply for a Schengen visa?",
+        "expected_accuracy": "safe_transparent",
+        "category": "edge_case",
+    },
+    {
+        "id": "q15",
+        "question": "Tell me everything you know about Acibadem University.",
+        "expected_accuracy": "correct_grounded",
+        "category": "edge_case",
     },
 ]
 
@@ -1161,7 +1197,7 @@ if __name__ == "__main__":
 docker compose exec django-web python rag/evaluation.py
 ```
 
-Expected: The script prints scores for all 10 questions. The actual scores depend on what content is in the vector store. If only the 4 demo seed documents + scraped pages exist, expect mostly "partially_correct" or "incorrect_unsupported" since the demo data doesn't cover tuition deadlines, library hours, etc. This is expected — the evaluation identifies content gaps for the scraping pipeline to address.
+Expected: The script prints scores for all 15 questions. The actual scores depend on what content is in the vector store. If only the 4 demo seed documents + scraped pages exist, expect mostly "partially_correct" or "incorrect_unsupported" since the demo data doesn't cover admissions, tuition, campus life, etc. This is expected — the evaluation identifies content gaps for the scraping pipeline to address.
 
 - [ ] **Step 3: Review evaluation output**
 
@@ -1173,7 +1209,7 @@ cat backend/logs/evaluation_results.json | python -m json.tool | head -60
 
 ```bash
 git add backend/rag/evaluation.py backend/logs/evaluation_results.json 2>/dev/null
-git commit -m "feat(eval): add evaluation runner with 10-question set and scoring rubric"
+git commit -m "feat(eval): add evaluation runner with 15-question set and scoring rubric"
 ```
 
 ---
@@ -3820,7 +3856,7 @@ git add -A && git commit -m "chore: final integration validation — all 5 sprin
 | Sprint | Focus | Tasks | Key Deliverable |
 |--------|-------|-------|-----------------|
 | Sprint 1 | Citation + health + scraper | 7 | Chat returns real citations, containers start reliably |
-| Sprint 2 | Scraping + evaluation | 4 | 5 scraped pages, 10-question eval with scores |
+| Sprint 2 | Scraping + evaluation | 4 | 5 scraped pages, 15-question eval with scores |
 | Sprint 3 | Auth + sessions + admin | 6 | Login page, session sidebar, admin dashboard |
 | Sprint 4 | Streaming + CI/CD + tests | 6 | WebSocket tokens, GitHub Actions, contract tests |
 | Sprint 5 | Polish + report | 7 | Markdown, pagination, persistence, backup docs, appendix |
