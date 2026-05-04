@@ -13,7 +13,7 @@
   padding: 1.25rem;
   position: relative;
   display: grid;
-  grid-template-columns: minmax(220px, 0.55fr) 1fr;
+  grid-template-columns: minmax(220px, 0.41fr) 1fr;
   gap: 1rem;
   align-items: start;
 }
@@ -50,7 +50,7 @@
 
 .topbar {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 2fr) minmax(280px, 0.8fr);
   gap: 1rem;
   align-items: stretch;
   margin-bottom: 1rem;
