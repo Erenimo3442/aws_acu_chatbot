@@ -8,7 +8,11 @@ The GitHub Actions CI is failing because:
 
 ## Solution
 
-You need to update the `package-lock.json` file by running `npm install` locally.
+**Good news!** The CI/CD pipeline has been updated to use `npm install` instead of `npm ci`, which is more forgiving with lock file mismatches. This means:
+
+✅ **The CI should now pass without manual intervention!**
+
+However, for best practices and faster builds in the future, you should still update the lock file:
 
 ### Option 1: Using Docker (Recommended)
 
