@@ -214,7 +214,8 @@ def scrape_bologna_static(processor: WebScrapeProcessor, stats: BatchStats,
 
 def scrape_bologna_programs(processor: WebScrapeProcessor, stats: BatchStats,
                             vector_store_manager, dry_run: bool = False,
-                            max_programs_per_level: int = 0) -> None:
+                            max_programs_per_level: int = 0,
+                            resume: bool = False) -> None:
     """Scrape Bologna program listings and detail pages.
 
     For each degree level, discover all programs, then scrape every
@@ -239,6 +240,28 @@ def scrape_bologna_programs(processor: WebScrapeProcessor, stats: BatchStats,
 
     stats.bologna_programs["program_count"] = len(all_programs)
     logger.info(f"Total programs discovered: {len(all_programs)}")
+
+    # --- Resume: skip already-ingested programs ---
+    if resume:
+        already_done: set[int] = set()
+        report_path = Path(__file__).resolve().parent.parent / "logs" / "scrape_report.json"
+        if report_path.exists():
+            try:
+                with open(report_path) as f:
+                    prev = json.loads(f.read())
+                for detail in prev.get("bologna_programs", {}).get("details", []):
+                    if isinstance(detail, dict) and "cur_sunit" in detail:
+                        if detail.get("status") == "ok":
+                            already_done.add(detail["cur_sunit"])
+                if already_done:
+                    logger.info(f"  Resuming: skipping {len(already_done)} already-ingested programs")
+            except Exception:
+                pass
+        all_programs = [p for p in all_programs if p["cur_sunit"] not in already_done]
+        logger.info(f"  Programs remaining after resume: {len(all_programs)}")
+        if not all_programs:
+            logger.info("  All programs already ingested — nothing to do.")
+            return
 
     if max_programs_per_level > 0:
         logger.info(f"  Limiting to {max_programs_per_level} programs (testing mode)")
@@ -299,6 +322,17 @@ def scrape_bologna_programs(processor: WebScrapeProcessor, stats: BatchStats,
         stats.bologna_programs["chunks"] += prog_chunks_total
         stats.bologna_programs["total"] += (prog_pages_ingested + prog_pages_failed)
 
+        # Track per-program status for resume support
+        stats.bologna_programs["details"].append({
+            "cur_sunit": cur_sunit,
+            "program_name": prog_name,
+            "degree": degree,
+            "status": "ok" if prog_pages_ingested > 0 else "failed",
+            "pages_ingested": prog_pages_ingested,
+            "pages_failed": prog_pages_failed,
+            "chunks": prog_chunks_total,
+        })
+
         if prog_pages_ingested > 0:
             logger.info(
                 f"    ✓ {prog_pages_ingested} detail pages ingested "
@@ -320,7 +354,8 @@ def scrape_bologna_programs(processor: WebScrapeProcessor, stats: BatchStats,
 def run_batch_scrape(dry_run: bool = False,
                      drupal_only: bool = False,
                      bologna_only: bool = False,
-                     max_programs_per_level: int = 0) -> dict:
+                     max_programs_per_level: int = 0,
+                     resume: bool = False) -> dict:
     """Run the full batch scrape across both sites."""
     vsm, _ = init_vector_store_manager()
     processor = WebScrapeProcessor()
@@ -338,6 +373,7 @@ def run_batch_scrape(dry_run: bool = False,
             processor, stats, vsm,
             dry_run=dry_run,
             max_programs_per_level=max_programs_per_level,
+            resume=resume,
         )
 
     result = stats.to_dict()
@@ -381,6 +417,8 @@ if __name__ == "__main__":
                         help="Only scrape Bologna (info package)")
     parser.add_argument("--max-programs", type=int, default=0,
                         help="Max programs per degree level (0=all, use 1-2 for testing)")
+    parser.add_argument("--resume", action="store_true",
+                        help="Skip programs already in scrape_report.json")
     parser.add_argument("--report", type=str, default="",
                         help="Path to save JSON report (default: logs/scrape_report.json)")
 
@@ -391,6 +429,7 @@ if __name__ == "__main__":
         drupal_only=args.drupal_only,
         bologna_only=args.bologna_only,
         max_programs_per_level=args.max_programs,
+        resume=args.resume,
     )
 
     # Optionally save report to custom path

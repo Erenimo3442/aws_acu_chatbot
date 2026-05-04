@@ -18,4 +18,5 @@ urlpatterns = [
     path("auth/logout", auth_views.logout_view, name="auth-logout"),
     path("auth/whoami", auth_views.whoami_view, name="auth-whoami"),
     path("admin/dashboard", admin_views.admin_dashboard, name="admin-dashboard"),
+    path("admin/run-scraper", admin_views.admin_run_scraper, name="admin-run-scraper"),
 ]
