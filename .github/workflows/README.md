@@ -66,14 +66,26 @@ npm run lint
 
 ## Environment Variables for CI
 
-The CI pipeline uses these environment variables:
+The CI pipeline uses these environment variables (matching Django settings expectations):
 
-- `DATABASE_URL`: PostgreSQL connection string
-- `SECRET_KEY`: Django secret key (test value)
-- `DEBUG`: Set to "False" for tests
+- `DJANGO_SECRET_KEY`: Django secret key for session signing
+- `DEBUG`: Set to "0" for tests
+- `DATABASE_ENGINE`: Database backend (postgresql for CI, sqlite3 for local)
+- `DATABASE_NAME`: Database name
+- `DATABASE_USERNAME`: Database user
+- `DATABASE_PASSWORD`: Database password
+- `DATABASE_HOST`: Database host
+- `DATABASE_PORT`: Database port
 - `OLLAMA_BASE_URL`: Ollama service URL (not used in tests)
 - `OLLAMA_CHAT_MODEL`: Chat model identifier
 - `OLLAMA_EMBEDDING_MODEL`: Embedding model identifier
+
+## Test Environment Configuration
+
+The backend includes a `.env.test` file that is automatically loaded when running tests. This file:
+- Uses SQLite in-memory database for fast local tests
+- Sets appropriate test values for all required settings
+- Can be overridden by environment variables in CI
 
 ## Adding New Tests
 
