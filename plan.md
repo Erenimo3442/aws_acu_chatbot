@@ -1220,7 +1220,7 @@ git add -A && git commit -m "chore: Sprint 2 integration validation complete"
 - Create: `backend/api_v1/auth_views.py`
 - Modify: `backend/api_v1/urls.py` (add routes)
 
-- [ ] **Step 1: Create auth views**
+- [x] **Step 1: Create auth views**
 
 Create `backend/api_v1/auth_views.py`:
 
@@ -1358,7 +1358,7 @@ def whoami_view(request: HttpRequest):
     )
 ```
 
-- [ ] **Step 2: Add auth routes to urlpatterns**
+- [x] **Step 2: Add auth routes to urlpatterns**
 
 Open `backend/api_v1/urls.py` and replace with:
 
@@ -1382,7 +1382,7 @@ urlpatterns = [
 ]
 ```
 
-- [ ] **Step 3: Test the auth endpoints**
+- [x] **Step 3: Test the auth endpoints**
 
 ```bash
 docker compose exec django-web python -c "
@@ -1406,7 +1406,7 @@ print('WHOAMI: test manually via curl or browser')
 "
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add backend/api_v1/auth_views.py backend/api_v1/urls.py
@@ -1422,7 +1422,7 @@ git commit -m "feat(api): add login, register, logout, whoami auth endpoints"
 - Modify: `frontend/src/lib/apiClient.ts` (add auth API functions)
 - Create: `frontend/src/services/authService.ts`
 
-- [ ] **Step 1: Add auth types to api.ts**
+- [x] **Step 1: Add auth types to api.ts**
 
 Open `frontend/src/types/api.ts` and append at the end of the file:
 
@@ -1465,7 +1465,7 @@ export type LogoutResponseData = {
 }
 ```
 
-- [ ] **Step 2: Add auth API functions to apiClient.ts**
+- [x] **Step 2: Add auth API functions to apiClient.ts**
 
 Open `frontend/src/lib/apiClient.ts` and append before the last line:
 
@@ -1506,7 +1506,7 @@ export function getWhoami() {
 }
 ```
 
-- [ ] **Step 3: Create authService.ts**
+- [x] **Step 3: Create authService.ts**
 
 Create `frontend/src/services/authService.ts`:
 
@@ -1533,7 +1533,7 @@ export async function whoami() {
 }
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add frontend/src/types/api.ts frontend/src/lib/apiClient.ts frontend/src/services/authService.ts
@@ -1550,7 +1550,7 @@ git commit -m "feat(frontend): add auth types, API client, and service layer"
 - Modify: `frontend/src/hooks/useChat.ts` (add auth state)
 - Modify: `frontend/src/App.tsx` (add auth/unauth routing)
 
-- [ ] **Step 1: Create LoginPage component**
+- [x] **Step 1: Create LoginPage component**
 
 Create `frontend/src/components/LoginPage.tsx`:
 
@@ -1661,7 +1661,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
 }
 ```
 
-- [ ] **Step 2: Create LoginPage CSS**
+- [x] **Step 2: Create LoginPage CSS**
 
 Create `frontend/src/components/LoginPage.css`:
 
@@ -1761,7 +1761,7 @@ Create `frontend/src/components/LoginPage.css`:
 }
 ```
 
-- [ ] **Step 3: Modify useChat to include auth user state**
+- [x] **Step 3: Modify useChat to include auth user state**
 
 Open `frontend/src/hooks/useChat.ts` and add these imports at the top:
 
@@ -1823,7 +1823,7 @@ Expand the return object to include auth state. Change the return block (lines 1
   }
 ```
 
-- [ ] **Step 4: Modify App.tsx to show login page when not authenticated**
+- [x] **Step 4: Modify App.tsx to show login page when not authenticated**
 
 Open `frontend/src/App.tsx` and replace the entire file content with:
 
@@ -1920,7 +1920,7 @@ function App() {
 export default App
 ```
 
-- [ ] **Step 5: Add auth-bar styles to App.css**
+- [x] **Step 5: Add auth-bar styles to App.css**
 
 Open `frontend/src/App.css` and append:
 
@@ -1949,7 +1949,7 @@ Open `frontend/src/App.css` and append:
 }
 ```
 
-- [ ] **Step 6: Build frontend to verify no TypeScript errors**
+- [x] **Step 6: Build frontend to verify no TypeScript errors**
 
 ```bash
 cd frontend && npm run build 2>&1 | tail -20
@@ -1957,7 +1957,7 @@ cd frontend && npm run build 2>&1 | tail -20
 
 Expected: Build succeeds with no errors.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add frontend/src/components/LoginPage.tsx frontend/src/components/LoginPage.css frontend/src/hooks/useChat.ts frontend/src/App.tsx frontend/src/App.css
@@ -1974,7 +1974,7 @@ git commit -m "feat(frontend): add login/register page with auth state managemen
 - Modify: `frontend/src/hooks/useChat.ts` (add session list state, startNewChat)
 - Modify: `frontend/src/App.tsx` (add sidebar layout)
 
-- [ ] **Step 1: Add session list API function**
+- [x] **Step 1: Add session list API function**
 
 Open `frontend/src/lib/apiClient.ts` and append:
 
@@ -2008,7 +2008,7 @@ Actually, let me scope this more carefully. The v1 contract specifies 5 endpoint
 
 Let me create a sessions list endpoint on the backend and a corresponding frontend component.
 
-- [ ] **Step 1a: Add session list backend endpoint**
+- [x] **Step 1a: Add session list backend endpoint**
 
 Open `backend/api_v1/views.py` and insert this new view before the `chat` function (before line 63):
 
@@ -2122,7 +2122,7 @@ urlpatterns = [
 ]
 ```
 
-- [ ] **Step 1b: Add frontend API functions for sessions**
+- [x] **Step 1b: Add frontend API functions for sessions**
 
 Open `frontend/src/lib/apiClient.ts` and append:
 
@@ -2147,7 +2147,7 @@ export function postCreateSession() {
 }
 ```
 
-- [ ] **Step 2: Create SessionSidebar component**
+- [x] **Step 2: Create SessionSidebar component**
 
 Create `frontend/src/components/SessionSidebar.tsx`:
 
@@ -2232,7 +2232,7 @@ export function SessionSidebar({ currentSessionId, onSelectSession, onNewChat }:
 }
 ```
 
-- [ ] **Step 3: Create SessionSidebar CSS**
+- [x] **Step 3: Create SessionSidebar CSS**
 
 Create `frontend/src/components/SessionSidebar.css`:
 
@@ -2324,7 +2324,7 @@ Create `frontend/src/components/SessionSidebar.css`:
 }
 ```
 
-- [ ] **Step 4: Update useChat with session list and new chat support**
+- [x] **Step 4: Update useChat with session list and new chat support**
 
 Open `frontend/src/hooks/useChat.ts` and add a `startNewChat` function and `switchSession` function. Insert after the `submitQuestion` function (after line 104):
 
@@ -2348,7 +2348,7 @@ Export them by adding to the return object:
     switchSession,
 ```
 
-- [ ] **Step 5: Update App.tsx to include sidebar layout**
+- [x] **Step 5: Update App.tsx to include sidebar layout**
 
 Open `frontend/src/App.tsx` and replace the return statement (after the auth check) with:
 
@@ -2448,7 +2448,7 @@ And update `.auth-bar` to span the full grid:
 }
 ```
 
-- [ ] **Step 6: Build and verify**
+- [x] **Step 6: Build and verify**
 
 ```bash
 cd frontend && npm run build 2>&1 | tail -20
@@ -2456,7 +2456,7 @@ cd frontend && npm run build 2>&1 | tail -20
 
 Expected: Build succeeds.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add backend/api_v1/views.py backend/api_v1/urls.py frontend/src/components/SessionSidebar.tsx frontend/src/components/SessionSidebar.css frontend/src/hooks/useChat.ts frontend/src/App.tsx frontend/src/App.css frontend/src/lib/apiClient.ts
@@ -2472,7 +2472,7 @@ git commit -m "feat(frontend): add session sidebar with list, new chat, and sess
 - Modify: `backend/api_v1/urls.py` (add admin routes)
 - Modify: `backend/api_v1/admin.py` (register custom admin views)
 
-- [ ] **Step 1: Create admin dashboard views**
+- [x] **Step 1: Create admin dashboard views**
 
 Create `backend/api_v1/admin_views.py`:
 
@@ -2541,7 +2541,7 @@ def admin_dashboard(request: HttpRequest):
         return error_response(request, exc.status, exc.code, exc.message, exc.details, exc.retryable)
 ```
 
-- [ ] **Step 2: Add admin route**
+- [x] **Step 2: Add admin route**
 
 Open `backend/api_v1/urls.py` and add:
 
@@ -2555,7 +2555,7 @@ And add the import:
 from . import admin_views
 ```
 
-- [ ] **Step 3: Test admin dashboard**
+- [x] **Step 3: Test admin dashboard**
 
 ```bash
 docker compose exec django-web python -c "
@@ -2572,7 +2572,7 @@ import json, urllib.request, http.cookiejar
 "
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add backend/api_v1/admin_views.py backend/api_v1/urls.py
@@ -2583,7 +2583,7 @@ git commit -m "feat(api): add admin dashboard endpoint with system stats"
 
 ## Task 3.6: Sprint 3 integration test
 
-- [ ] **Step 1: Run full test suite**
+- [x] **Step 1: Run full test suite**
 
 ```bash
 docker compose exec django-web python manage.py test api_v1.tests -v 2 2>&1 | tail -10
@@ -2591,13 +2591,13 @@ docker compose exec django-web python manage.py test api_v1.tests -v 2 2>&1 | ta
 
 Expected: All tests pass.
 
-- [ ] **Step 2: Verify auth flow end-to-end**
+- [x] **Step 2: Verify auth flow end-to-end**
 
 ```bash
 docker compose exec django-web python manage.py test api_v1.tests.test_access_control -v 2
 ```
 
-- [ ] **Step 3: Verify frontend build**
+- [x] **Step 3: Verify frontend build**
 
 ```bash
 cd frontend && npm run build 2>&1 | tail -10
@@ -2605,7 +2605,7 @@ cd frontend && npm run build 2>&1 | tail -10
 
 Expected: No errors.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add -A && git commit -m "chore: Sprint 3 integration validation complete"
