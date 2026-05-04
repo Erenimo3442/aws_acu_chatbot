@@ -17,7 +17,7 @@ class SmokeTestCase(TestCase):
         """Test that URL configuration is loaded."""
         # Verify that at least one URL pattern exists
         try:
-            reverse('api_v1:sessions')
+            reverse('session-list')
             url_exists = True
         except Exception:
             url_exists = False

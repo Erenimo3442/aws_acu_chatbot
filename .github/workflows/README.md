@@ -45,6 +45,10 @@ uv run python manage.py test
 ### Frontend Tests
 
 ```bash
+# First, update package-lock.json if you modified package.json
+cd frontend
+npm install
+
 # Inside Docker container
 docker compose exec frontend npm run test
 
@@ -63,6 +67,16 @@ npm run test:watch
 cd frontend
 npm run lint
 ```
+
+## Important: Keeping package-lock.json in Sync
+
+When you add new dependencies to `frontend/package.json`:
+
+1. Run `npm install` in the frontend directory to update `package-lock.json`
+2. Commit both `package.json` and `package-lock.json` together
+3. The CI pipeline uses `npm install` to handle dependency installation
+
+**Note:** The CI currently uses `npm install` instead of `npm ci` to be more forgiving with lock file updates during development. For production deployments, consider switching back to `npm ci` for stricter dependency management.
 
 ## Environment Variables for CI
 
