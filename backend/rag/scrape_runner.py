@@ -289,10 +289,10 @@ def scrape_bologna_programs(processor: WebScrapeProcessor, stats: BatchStats,
             if ok:
                 prog_pages_ingested += 1
                 prog_chunks_total += len(chunks)
-                pm.inf(f"      [{func}] ✓ {len(chunks)} chunks")
+                logger.info(f"      [{func}] ✓ {len(chunks)} chunks")
             else:
                 prog_pages_failed += 1
-                pm.war(f"      [{func}] ✗ add_chunks failed ({len(chunks)} chunks)")
+                logger.warning(f"      [{func}] ✗ add_chunks failed ({len(chunks)} chunks)")
 
         stats.bologna_programs["ingested"] += prog_pages_ingested
         stats.bologna_programs["failed"] += prog_pages_failed

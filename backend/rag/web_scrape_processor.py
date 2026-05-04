@@ -215,8 +215,8 @@ class WebScrapeProcessor:
                                    source_tag: str = "") -> Document | None:
         """Fetch a Bologna dynConPage.aspx static page.
 
-        These pages are simple HTML tables inside a page wrapper.
-        We request them directly — no iframe traversal needed.
+        These pages are ASP.NET WebForms — content lives inside <form> tags.
+        Do NOT decompose forms or we lose all text.
         """
         if not HAS_SCRAPER_DEPS:
             logger.warning("requests/BeautifulSoup not installed; cannot scrape")
@@ -227,20 +227,24 @@ class WebScrapeProcessor:
             resp = self._get_session().get(url, timeout=self.request_timeout)
             resp.raise_for_status()
         except Exception as exc:
-            logger.error("Failed to fetch %s: %s", url, exc)
+            logger.error("Failed to fetch %s: %s (%s)", url, type(exc).__name__, exc)
             return None
 
         soup = BeautifulSoup(resp.text, "html.parser")
 
-        # Bologna pages wrap content in plain HTML — extract the body text
         body = soup.find("body")
         if body is None:
             logger.warning("No <body> in %s", url)
             return None
 
-        # Remove form elements (ASP.NET postback cruft)
+        # Remove only empty/hidden form elements, not the main content form
         for form_tag in body.find_all("form"):
-            form_tag.decompose()
+            form_text = self._normalize_text(form_tag.get_text())
+            if len(form_text) < 20:  # Empty or nearly empty form
+                form_tag.decompose()
+
+        # Also strip boilerplate (scripts, styles, Bootstrap nav elements)
+        self._remove_boilerplate(soup)
 
         text = body.get_text(separator="\n", strip=True)
         cleaned = self._normalize_text(text)
@@ -337,8 +341,8 @@ class WebScrapeProcessor:
                                      ) -> Document | None:
         """Fetch a single Bologna program detail sub-page.
 
-        These pages (progAbout.aspx, progAdmissionReq.aspx, etc.) return
-        tabular data about a specific program.
+        These are ASP.NET pages — content lives inside <form> tags.
+        Do NOT decompose the main form or we lose all text.
         """
         if not HAS_SCRAPER_DEPS:
             return None
@@ -348,16 +352,19 @@ class WebScrapeProcessor:
             resp = self._get_session().get(url, timeout=self.request_timeout)
             resp.raise_for_status()
         except Exception as exc:
-            logger.error("Failed to fetch %s: %s", url, exc)
+            logger.error("Failed to fetch %s: %s (%s)", url, type(exc).__name__, exc)
             return None
 
         soup = BeautifulSoup(resp.text, "html.parser")
 
-        # Remove ASP.NET form/postback cruft
+        # Remove only empty/hidden forms, not content forms
         for form_tag in soup.find_all("form"):
-            form_tag.decompose()
+            form_text = self._normalize_text(form_tag.get_text())
+            if len(form_text) < 20:
+                form_tag.decompose()
 
-        # Try to find the main content area
+        self._remove_boilerplate(soup)
+
         body = soup.find("body")
         if body is None:
             return None
