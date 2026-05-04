@@ -3,6 +3,8 @@ services:
     image: ollama/ollama:latest
     container_name: ollama
     gpus: all
+    # For GPU support, ensure that the host machine has NVIDIA drivers and the NVIDIA Container Toolkit installed. Intel or AMD ıs not supported.
+    # you disable GPU support by removing the "gpus: all" line and the container will run on CPU, but performance may be significantly slower.
     ports:
       - "11434:11434"
     volumes:
