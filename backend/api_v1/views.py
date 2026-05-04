@@ -207,12 +207,23 @@ def chat(request: HttpRequest):
             )
 
             # Use shared RAG service module, but keep a deterministic fallback for local/test runs.
-            answer_text = "HELLO EREN"
+            answer_text = "This is a test message"
+            citation_data: list[dict] = []
             try:
                 rag_result = rag_services.generate_chat_answer(question)
                 candidate = str(rag_result.get("answer", "")).strip()
                 if candidate:
                     answer_text = candidate
+                # Extract sources as citations
+                for src in rag_result.get("sources", []):
+                    citation_data.append({
+                        "title": src.get("title", src.get("source", "Unknown")),
+                        "snippet": src.get("content", "")[:300],
+                        "url": src.get("url", ""),
+                        "page": src.get("page", ""),
+                        "ingestion_type": src.get("ingestion_type", ""),
+                        "score": 0.0,
+                    })
             except Exception as e:
                 logger.error(f"RAG service error, using fallback answer: {str(e)}")
                 answer_text = f"I just errored {str(e)}"
@@ -223,7 +234,32 @@ def chat(request: HttpRequest):
                 content=answer_text,
             )
 
+            # Create Citation objects for each source
+            import uuid
+            import hashlib
+            for cit in citation_data:
+                source_str = str(cit.get("url", cit.get("title", "")))
+                source_id = f"src_{hashlib.sha256(source_str.encode()).hexdigest()[:12]}"
+                snippet = str(cit.get("snippet", ""))[:300]
+                chunk_id = f"chunk_{hashlib.sha256(snippet.encode()).hexdigest()[:12]}"
+                Citation.objects.create(
+                    citation_id=f"cit_{uuid.uuid4().hex[:12]}",
+                    source_id=source_id,
+                    chunk_id=chunk_id,
+                    snippet=snippet,
+                    title=str(cit.get("title", "Unknown")),
+                    url=str(cit.get("url", "")),
+                    page=cit.get("page") if cit.get("page") else None,
+                    doc_metadata={
+                        "ingestion_type": str(cit.get("ingestion_type", "")),
+                    },
+                    score=float(cit.get("score", 0.0)),
+                    message=assistant_message,
+                )
+
             ChatSession.objects.filter(id=chat_session.id).update(last_message=assistant_message)
+
+        serialized_citations = [_serialize_citation(c) for c in Citation.objects.filter(message=assistant_message)]
 
         return success_response(
             request,
@@ -236,7 +272,7 @@ def chat(request: HttpRequest):
                     "id": assistant_message.id,
                     "role": assistant_message.role,
                     "answer": assistant_message.content,
-                    "citations": [],
+                    "citations": serialized_citations,
                     "created_at": assistant_message.created_at.isoformat().replace("+00:00", "Z"),
                 },
                 "stream": {
@@ -424,6 +460,29 @@ def feedback(request: HttpRequest):
 def source_by_id(request: HttpRequest, source_id: str):
     try:
         chunk_id = request.GET.get("chunk_id")
+
+        # Look up in Citation model first (ties to chat messages)
+        citation_queryset = Citation.objects.filter(source_id=source_id)
+        if chunk_id:
+            citation_queryset = citation_queryset.filter(chunk_id=chunk_id)
+
+        citation = citation_queryset.order_by("-message__created_at").first()
+        if citation:
+            return success_response(
+                request,
+                {
+                    "source_id": citation.source_id,
+                    "title": citation.title,
+                    "url": citation.url,
+                    "chunk_id": citation.chunk_id,
+                    "snippet": citation.snippet,
+                    "page": citation.page,
+                    "doc_metadata": citation.doc_metadata or {},
+                },
+                status=200,
+            )
+
+        # Fallback: SourceChunk model (ingestion pipeline)
         queryset = SourceChunk.objects.filter(source_id=source_id)
         if chunk_id:
             queryset = queryset.filter(chunk_id=chunk_id)

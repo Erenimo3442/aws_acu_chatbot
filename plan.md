@@ -19,11 +19,11 @@
 **Files:**
 - Modify: `backend/rag/api_views.py` (full file)
 
-- [ ] **Step 1: Read current return format to confirm shape**
+- [x] **Step 1: Read current return format to confirm shape**
 
 Read `backend/rag/api_views.py` lines 24-41 (the `_docs_to_sources` helper) and lines 84-130 (the `generate_chat_answer` function). We will replace `_docs_to_sources` with a richer function that captures everything needed for Citation DB rows, and change the return value to include the raw document list.
 
-- [ ] **Step 2: Replace `_docs_to_sources` with `_docs_to_citation_entries`**
+- [x] **Step 2: Replace `_docs_to_sources` with `_docs_to_citation_entries`**
 
 Replace the existing `_docs_to_sources` function (lines 24-41) and the `generate_chat_answer` function (lines 84-130) with the following code. Open `backend/rag/api_views.py` and replace the content from line 24 through line 130 with:
 
@@ -164,7 +164,7 @@ def generate_chat_answer(question: str) -> dict:
     }
 ```
 
-- [ ] **Step 3: Run the existing tests to ensure backward compat**
+- [x] **Step 3: Run the existing tests to ensure backward compat**
 
 ```bash
 docker compose exec backend python manage.py test api_v1.tests -v 2 2>&1 | tail -20
@@ -172,7 +172,7 @@ docker compose exec backend python manage.py test api_v1.tests -v 2 2>&1 | tail 
 
 Expected: All existing tests pass (the `generate_chat_answer` return value now has extra keys, but existing callers only access `"answer"` and `"sources"`, so this is a backward-compatible extension).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add backend/rag/api_views.py
@@ -186,7 +186,7 @@ git commit -m "feat(rag): enrich citation output with structured data and confid
 **Files:**
 - Modify: `backend/api_v1/views.py` (lines 127-166)
 
-- [ ] **Step 1: Replace the chat response assembly in views.py**
+- [x] **Step 1: Replace the chat response assembly in views.py**
 
 Open `backend/api_v1/views.py` and replace lines 127 through 166 (the RAG call and response assembly block inside the `chat` view) with:
 
@@ -254,7 +254,7 @@ Open `backend/api_v1/views.py` and replace lines 127 through 166 (the RAG call a
         )
 ```
 
-- [ ] **Step 2: Verify the change parses correctly by running the test suite**
+- [x] **Step 2: Verify the change parses correctly by running the test suite**
 
 ```bash
 docker compose exec backend python manage.py test api_v1.tests -v 2 2>&1 | tail -30
@@ -262,7 +262,7 @@ docker compose exec backend python manage.py test api_v1.tests -v 2 2>&1 | tail 
 
 Expected: All 30 existing tests pass.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add backend/api_v1/views.py
@@ -276,7 +276,7 @@ git commit -m "feat(api): persist RAG citations to DB and return in chat respons
 **Files:**
 - Modify: `backend/api_v1/tests/test_response_contract.py` (append test)
 
-- [ ] **Step 1: Add a test that verifies citations appear in chat response**
+- [x] **Step 1: Add a test that verifies citations appear in chat response**
 
 Open `backend/api_v1/tests/test_response_contract.py` and append this test class at the end of the file (after the last `IngestIdempotencyContractTests` class):
 
@@ -333,7 +333,7 @@ class ChatCitationContractTests(TestCase):
             self.assertIsInstance(citation["doc_metadata"], dict)
 ```
 
-- [ ] **Step 2: Run the new tests**
+- [x] **Step 2: Run the new tests**
 
 ```bash
 docker compose exec backend python manage.py test api_v1.tests.test_response_contract.ChatCitationContractTests -v 2
@@ -341,7 +341,7 @@ docker compose exec backend python manage.py test api_v1.tests.test_response_con
 
 Expected: 2 tests pass (citations list present, citation fields match contract). The RAG pipeline will return citations from the demo seed data (4 Acibadem University pages).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add backend/api_v1/tests/test_response_contract.py
@@ -356,7 +356,7 @@ git commit -m "test(api): add citation contract tests for chat response"
 - Modify: `backend/Dockerfile` (append HEALTHCHECK)
 - Modify: `docker-compose.yml` (add healthcheck to db, ollama, backend; use `condition: service_healthy`)
 
-- [ ] **Step 1: Add HEALTHCHECK to backend Dockerfile**
+- [x] **Step 1: Add HEALTHCHECK to backend Dockerfile**
 
 Open `backend/Dockerfile` and insert the following two lines just before the final `CMD` line (after line 49, before line 51):
 
@@ -387,7 +387,7 @@ HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=5 \
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
 ```
 
-- [ ] **Step 2: Add health checks and `condition: service_healthy` to docker-compose.yml**
+- [x] **Step 2: Add health checks and `condition: service_healthy` to docker-compose.yml**
 
 Open `docker-compose.yml` and replace the entire file content with:
 
@@ -487,7 +487,7 @@ volumes:
   frontend_node_modules:
 ```
 
-- [ ] **Step 3: Rebuild and verify healthy startup**
+- [x] **Step 3: Rebuild and verify healthy startup**
 
 ```bash
 docker compose down
@@ -498,7 +498,7 @@ docker compose ps
 
 Expected: All four services show `(healthy)` in the STATUS column. If any service is `(unhealthy)` or `(starting)` after 60 seconds, check logs with `docker compose logs <service>`.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add backend/Dockerfile docker-compose.yml
@@ -544,7 +544,7 @@ git commit -m "feat(docker): add health checks with depends_on conditions to all
 **Files:**
 - Modify: `backend/api_v1/views.py` (lines 436-455, the item processing loop in `ingest`)
 
-- [ ] **Step 1: Update the ingest view to handle `url` type items**
+- [x] **Step 1: Update the ingest view to handle `url` type items**
 
 Open `backend/api_v1/views.py` and replace lines 436 through 455 (the `for item in items:` loop and the `if documents_payload:` block) with:
 
@@ -585,7 +585,7 @@ Open `backend/api_v1/views.py` and replace lines 436 through 455 (the `for item 
                 pass
 ```
 
-- [ ] **Step 2: Run the ingest tests to verify url-type handling doesn't break existing flow**
+- [x] **Step 2: Run the ingest tests to verify url-type handling doesn't break existing flow**
 
 ```bash
 docker compose exec backend python manage.py test api_v1.tests.test_ingest_service_token api_v1.tests.test_access_control -v 2
@@ -593,7 +593,7 @@ docker compose exec backend python manage.py test api_v1.tests.test_ingest_servi
 
 Expected: All existing ingest tests pass. The URL-type path is exercised when the scraper is reachable; when not, it silently skips.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add backend/api_v1/views.py
@@ -604,7 +604,7 @@ git commit -m "feat(api): wire URL-type ingest items through WebScrapeProcessor"
 
 ## Task 1.7: Sprint 1 integration test
 
-- [ ] **Step 1: Run full backend test suite**
+- [x] **Step 1: Run full backend test suite**
 
 ```bash
 docker compose exec backend python manage.py test api_v1.tests -v 2 2>&1 | tail -40
@@ -612,7 +612,7 @@ docker compose exec backend python manage.py test api_v1.tests -v 2 2>&1 | tail 
 
 Expected: All 32 tests pass (30 existing + 2 new citation tests).
 
-- [ ] **Step 2: End-to-end chat test with citations**
+- [x] **Step 2: End-to-end chat test with citations**
 
 ```bash
 docker compose exec backend python -c "
@@ -634,7 +634,7 @@ for c in resp['data']['message']['citations']:
 
 Expected: `CITATION_COUNT` >= 1, each citation has `citation_id`, `title`, `snippet`. The RAG pipeline returns citations from the demo seed data or any previously ingested content.
 
-- [ ] **Step 3: Sprint 1 final commit (if any uncommitted changes)**
+- [x] **Step 3: Sprint 1 final commit (if any uncommitted changes)**
 
 ```bash
 git status
@@ -686,7 +686,7 @@ Auto-saves JSON report to `backend/logs/scrape_report.json`
 **Files:**
 - Already done in Task 1.1 — the `generate_chat_answer` function now checks `RAG_CONFIDENCE_THRESHOLD` and returns a fallback message when confidence is below threshold. Verify and document.
 
-- [ ] **Step 1: Add RAG_CONFIDENCE_THRESHOLD to .env.example**
+- [x] **Step 1: Add RAG_CONFIDENCE_THRESHOLD to .env.example**
 
 Open `.env.example` and append at the end:
 
@@ -701,7 +701,7 @@ Open `.env` (or create if absent) and add the same line:
 RAG_CONFIDENCE_THRESHOLD=0.3
 ```
 
-- [ ] **Step 2: Test fallback behavior with an obscure question**
+- [x] **Step 2: Test fallback behavior with an obscure question**
 
 ```bash
 docker compose exec backend python -c "
@@ -715,7 +715,7 @@ print('CITATIONS:', len(result.get('citation_entries', [])))
 
 Expected: The answer should be the fallback text ("I could not find reliable information..."), confidence should be 0.0 or very low, and citations should be empty. The LLM should not hallucinate.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add .env.example .env 2>/dev/null; git add backend/rag/api_views.py
@@ -729,7 +729,7 @@ git commit -m "feat(rag): add confidence threshold with fallback response for we
 **Files:**
 - Create: `backend/rag/evaluation.py`
 
-- [ ] **Step 1: Create the evaluation runner**
+- [x] **Step 1: Create the evaluation runner**
 
 Create `backend/rag/evaluation.py`:
 
@@ -945,7 +945,7 @@ if __name__ == "__main__":
     run_evaluation(output_path=out)
 ```
 
-- [ ] **Step 2: Run the evaluation**
+- [x] **Step 2: Run the evaluation**
 
 ```bash
 docker compose exec backend python rag/evaluation.py
@@ -953,13 +953,13 @@ docker compose exec backend python rag/evaluation.py
 
 Expected: The script prints scores for all 15 questions. The actual scores depend on what content is in the vector store. If only the 4 demo seed documents + scraped pages exist, expect mostly "partially_correct" or "incorrect_unsupported" since the demo data doesn't cover admissions, tuition, campus life, etc. This is expected — the evaluation identifies content gaps for the scraping pipeline to address.
 
-- [ ] **Step 3: Review evaluation output**
+- [x] **Step 3: Review evaluation output**
 
 ```bash
 cat backend/logs/evaluation_results.json | python -m json.tool | head -60
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add backend/rag/evaluation.py backend/logs/evaluation_results.json 2>/dev/null
@@ -970,7 +970,7 @@ git commit -m "feat(eval): add evaluation runner with 15-question set and scorin
 
 ## Task 2.4: Sprint 2 integration test
 
-- [ ] **Step 1: Run backend test suite**
+- [x] **Step 1: Run backend test suite**
 
 ```bash
 docker compose exec backend python manage.py test api_v1.tests -v 2 2>&1 | tail -10
@@ -978,11 +978,11 @@ docker compose exec backend python manage.py test api_v1.tests -v 2 2>&1 | tail 
 
 Expected: All 32 tests pass.
 
-- [ ] **Step 2: Verify scraper + citations + evaluation all work together**
+- [x] **Step 2: Verify scraper + citations + evaluation all work together**
 
 ```bash
 docker compose exec backend bash -c "
-python rag/scrape_runner.py && \
+python rag/scrape_runner.py --max-programs 1 && \
 python rag/evaluation.py && \
 python -c \"
 from rag.api_views import generate_chat_answer
@@ -992,7 +992,7 @@ print('CONFIDENCE:', r.get('confidence', 0))
 \""
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add -A && git commit -m "chore: Sprint 2 integration validation complete"
