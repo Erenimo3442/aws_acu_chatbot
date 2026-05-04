@@ -12,18 +12,18 @@
 
 # Sprint 1: Citation Pipeline + Health Checks + First Real Scraper
 
-**Goal:** Make `/chat` return real citations from the RAG pipeline, make containers start reliably, and ingest one real university web page.
+**Goal:** Make `/chat` return real citations from the RAG pipeline, make containers start reliably, and build a dual-site scraper (Drupal + ASP.NET/Bologna) with 50+ scrape targets and Ollama-powered embeddings.
 
 ## Task 1.1: Enrich RAG return with citation-ready structured data
 
 **Files:**
 - Modify: `backend/rag/api_views.py` (full file)
 
-- [ ] **Step 1: Read current return format to confirm shape**
+- [x] **Step 1: Read current return format to confirm shape**
 
 Read `backend/rag/api_views.py` lines 24-41 (the `_docs_to_sources` helper) and lines 84-130 (the `generate_chat_answer` function). We will replace `_docs_to_sources` with a richer function that captures everything needed for Citation DB rows, and change the return value to include the raw document list.
 
-- [ ] **Step 2: Replace `_docs_to_sources` with `_docs_to_citation_entries`**
+- [x] **Step 2: Replace `_docs_to_sources` with `_docs_to_citation_entries`**
 
 Replace the existing `_docs_to_sources` function (lines 24-41) and the `generate_chat_answer` function (lines 84-130) with the following code. Open `backend/rag/api_views.py` and replace the content from line 24 through line 130 with:
 
@@ -164,15 +164,15 @@ def generate_chat_answer(question: str) -> dict:
     }
 ```
 
-- [ ] **Step 3: Run the existing tests to ensure backward compat**
+- [x] **Step 3: Run the existing tests to ensure backward compat**
 
 ```bash
-docker compose exec django-web python manage.py test api_v1.tests -v 2 2>&1 | tail -20
+docker compose exec backend python manage.py test api_v1.tests -v 2 2>&1 | tail -20
 ```
 
 Expected: All existing tests pass (the `generate_chat_answer` return value now has extra keys, but existing callers only access `"answer"` and `"sources"`, so this is a backward-compatible extension).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add backend/rag/api_views.py
@@ -186,7 +186,7 @@ git commit -m "feat(rag): enrich citation output with structured data and confid
 **Files:**
 - Modify: `backend/api_v1/views.py` (lines 127-166)
 
-- [ ] **Step 1: Replace the chat response assembly in views.py**
+- [x] **Step 1: Replace the chat response assembly in views.py**
 
 Open `backend/api_v1/views.py` and replace lines 127 through 166 (the RAG call and response assembly block inside the `chat` view) with:
 
@@ -254,15 +254,15 @@ Open `backend/api_v1/views.py` and replace lines 127 through 166 (the RAG call a
         )
 ```
 
-- [ ] **Step 2: Verify the change parses correctly by running the test suite**
+- [x] **Step 2: Verify the change parses correctly by running the test suite**
 
 ```bash
-docker compose exec django-web python manage.py test api_v1.tests -v 2 2>&1 | tail -30
+docker compose exec backend python manage.py test api_v1.tests -v 2 2>&1 | tail -30
 ```
 
 Expected: All 30 existing tests pass.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add backend/api_v1/views.py
@@ -276,7 +276,7 @@ git commit -m "feat(api): persist RAG citations to DB and return in chat respons
 **Files:**
 - Modify: `backend/api_v1/tests/test_response_contract.py` (append test)
 
-- [ ] **Step 1: Add a test that verifies citations appear in chat response**
+- [x] **Step 1: Add a test that verifies citations appear in chat response**
 
 Open `backend/api_v1/tests/test_response_contract.py` and append this test class at the end of the file (after the last `IngestIdempotencyContractTests` class):
 
@@ -333,15 +333,15 @@ class ChatCitationContractTests(TestCase):
             self.assertIsInstance(citation["doc_metadata"], dict)
 ```
 
-- [ ] **Step 2: Run the new tests**
+- [x] **Step 2: Run the new tests**
 
 ```bash
-docker compose exec django-web python manage.py test api_v1.tests.test_response_contract.ChatCitationContractTests -v 2
+docker compose exec backend python manage.py test api_v1.tests.test_response_contract.ChatCitationContractTests -v 2
 ```
 
 Expected: 2 tests pass (citations list present, citation fields match contract). The RAG pipeline will return citations from the demo seed data (4 Acibadem University pages).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add backend/api_v1/tests/test_response_contract.py
@@ -354,9 +354,9 @@ git commit -m "test(api): add citation contract tests for chat response"
 
 **Files:**
 - Modify: `backend/Dockerfile` (append HEALTHCHECK)
-- Modify: `docker-compose.yml` (add healthcheck to db, ollama, django-web; use `condition: service_healthy`)
+- Modify: `docker-compose.yml` (add healthcheck to db, ollama, backend; use `condition: service_healthy`)
 
-- [ ] **Step 1: Add HEALTHCHECK to backend Dockerfile**
+- [x] **Step 1: Add HEALTHCHECK to backend Dockerfile**
 
 Open `backend/Dockerfile` and insert the following two lines just before the final `CMD` line (after line 49, before line 51):
 
@@ -387,7 +387,7 @@ HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=5 \
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
 ```
 
-- [ ] **Step 2: Add health checks and `condition: service_healthy` to docker-compose.yml**
+- [x] **Step 2: Add health checks and `condition: service_healthy` to docker-compose.yml**
 
 Open `docker-compose.yml` and replace the entire file content with:
 
@@ -430,14 +430,14 @@ services:
       start_period: 10s
       retries: 5
 
-  django-web:
+  backend:
     build: ./backend
     container_name: django-docker
     ports:
       - "8000:8000"
     volumes:
       - ./backend:/app
-      - ./backend/chromadb-data:/app/chromadb-data
+      - chromadb_data:/var/lib/chromadb
     depends_on:
       db:
         condition: service_healthy
@@ -474,11 +474,11 @@ services:
       - ./frontend:/app
       - frontend_node_modules:/app/node_modules
     depends_on:
-      django-web:
+      backend:
         condition: service_healthy
     environment:
       CHOKIDAR_USEPOLLING: "true"
-      VITE_API_PROXY_TARGET: http://django-web:8000
+      VITE_API_PROXY_TARGET: http://backend:8000
     command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 5173"
 
 volumes:
@@ -487,7 +487,7 @@ volumes:
   frontend_node_modules:
 ```
 
-- [ ] **Step 3: Rebuild and verify healthy startup**
+- [x] **Step 3: Rebuild and verify healthy startup**
 
 ```bash
 docker compose down
@@ -498,7 +498,7 @@ docker compose ps
 
 Expected: All four services show `(healthy)` in the STATUS column. If any service is `(unhealthy)` or `(starting)` after 60 seconds, check logs with `docker compose logs <service>`.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add backend/Dockerfile docker-compose.yml
@@ -507,163 +507,35 @@ git commit -m "feat(docker): add health checks with depends_on conditions to all
 
 ---
 
-## Task 1.5: Add real URL scraper to WebScrapeProcessor
+## Task 1.5: Build dual-site web scraper (Drupal + Bologna/ASP.NET)
+
+**Status:** DONE
 
 **Files:**
-- Modify: `backend/rag/web_scrape_processor.py` (add imports and `fetch_url` method)
-- Modify: `backend/requirements.txt` (add `beautifulsoup4` and `requests` if missing)
+- Rewrite: `backend/rag/web_scrape_processor.py` (dual-site scraper with 4 fetch methods)
+- Modify: `backend/pyproject.toml` (add `beautifulsoup4>=4.12`, `requests>=2.31`, `lxml>=5.0`, `langchain-text-splitters>=1.0.0`)
 
-- [ ] **Step 1: Check if beautifulsoup4 and requests are available**
+**Architecture:** Two site types require different scraping strategies:
 
-```bash
-docker compose exec django-web pip list 2>/dev/null | grep -iE "beautifulsoup|requests" || echo "DEPS_MISSING"
-```
+| Site | Technology | Scraper Method | Key Challenge |
+|------|-----------|----------------|---------------|
+| `acibadem.edu.tr` | Drupal CMS | `fetch_drupal_page()` | Extract `<main>` content, strip 5 tag names + 12 CSS selectors, use `requests.Session()` |
+| `obs.acibadem.edu.tr` | ASP.NET WebForms | `fetch_bologna_static_page()` / `fetch_bologna_program_detail()` / `fetch_bologna_program_listing()` | Content lives inside `<form runat="server">` — do NOT decompose forms or all content is lost. Only remove forms with < 20 chars of text. |
 
-If `DEPS_MISSING` is printed, continue to Step 1a. Otherwise skip to Step 2.
+**Key design decisions:**
+- No Playwright/JavaScript needed — all content accessible via direct HTTP GET (URLs discovered through one-time Playwright exploration on 2026-05-04)
+- `requests.Session()` with persistent headers for connection reuse
+- Content deduplication via SHA-256 fingerprinting
+- Graceful degradation if scraping deps are missing (`HAS_SCRAPER_DEPS` flag)
+- All methods return `Document | None` for easy integration with existing ingestion pipeline
+- Ingestion types: `"drupal_scrape"`, `"bologna_static"`, `"bologna_program_detail"`
 
-- [ ] **Step 1a: Add beautifulsoup4 and requests to requirements.txt**
-
-Read `backend/requirements.txt` first to see its current content, then add these lines at the end of the file:
-
-```
-beautifulsoup4>=4.12
-requests>=2.31
-```
-
-```bash
-docker compose exec django-web pip install beautifulsoup4 requests
-```
-
-- [ ] **Step 2: Add the `fetch_url` method to WebScrapeProcessor**
-
-Open `backend/rag/web_scrape_processor.py` and replace the import block (lines 1-8) with:
-
-```python
-import os
-import re
-import hashlib
-
-from langchain_core.documents import Document
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-
-from printmeup import printmeup as pm
-
-try:
-    import requests
-    from bs4 import BeautifulSoup
-    HAS_SCRAPER_DEPS = True
-except ImportError:
-    HAS_SCRAPER_DEPS = False
-```
-
-Then, insert the following method into the `WebScrapeProcessor` class, after the `__init__` method (after line 16):
-
-```python
-    def fetch_url(self, url: str, title: str = "", source_tag: str = "") -> Document | None:
-        """Fetch a single URL and return a LangChain Document with its text content.
-
-        Args:
-            url: The URL to scrape.
-            title: Optional title override. If empty, uses HTML <title>.
-            source_tag: Optional source label for metadata. If empty, uses the URL hostname.
-
-        Returns:
-            A Document with page_content set to the normalized body text, or None on failure.
-        """
-        if not HAS_SCRAPER_DEPS:
-            pm.war("requests and beautifulsoup4 are not installed; cannot scrape URLs")
-            return None
-
-        try:
-            pm.inf(f"Fetching URL: {url}")
-            resp = requests.get(
-                url,
-                timeout=15,
-                headers={
-                    "User-Agent": "ACUChatbot/1.0 (university-project; educational-use-only)"
-                },
-            )
-            resp.raise_for_status()
-        except Exception as e:
-            pm.err(e=e, m=f"Failed to fetch URL {url}")
-            return None
-
-        soup = BeautifulSoup(resp.text, "html.parser")
-
-        # Remove script, style, nav, footer elements that don't contain useful content
-        for tag_name in ("script", "style", "nav", "footer", "header"):
-            for tag in soup.find_all(tag_name):
-                tag.decompose()
-
-        body = soup.find("body")
-        text = body.get_text(separator="\n", strip=True) if body else soup.get_text(separator="\n", strip=True)
-        cleaned = self._normalize_text(text)
-
-        if len(cleaned) < self.min_content_length:
-            pm.war(f"Skipping URL {url}: content too short ({len(cleaned)} chars)")
-            return None
-
-        resolved_title = title or (soup.title.string.strip() if soup.title else url.split("/")[-1] or "Untitled")
-        resolved_source = source_tag or url
-
-        return Document(
-            page_content=cleaned,
-            metadata={
-                "title": self._normalize_text(resolved_title),
-                "source": resolved_source,
-                "url": url,
-                "ingestion_type": "url_scrape",
-                "content_type": resp.headers.get("Content-Type", ""),
-            },
-        )
-
-    def fetch_url_and_ingest(self, url: str, title: str = "", source_tag: str = "") -> dict:
-        """Fetch a URL and ingest it into the vector store in one call.
-        
-        Returns a status dict:
-            {"status": "ingested"|"failed", "url": url, "title": title, "chunk_count": int}
-        """
-        doc = self.fetch_url(url, title=title, source_tag=source_tag)
-        if doc is None:
-            return {"status": "failed", "url": url, "title": title, "chunk_count": 0}
-
-        chunks = self.split_documents_into_chunks([doc])
-        if not chunks:
-            return {"status": "failed", "url": url, "title": title, "chunk_count": 0}
-
-        return {"status": "ingested", "url": url, "title": title, "chunk_count": len(chunks)}
-```
-
-- [ ] **Step 3: Test the scraper by scraping one Acibadem University page**
-
-```bash
-docker compose exec django-web python -c "
-from rag.web_scrape_processor import WebScrapeProcessor
-from rag.vector_store import init_vector_store_manager
-
-vsm, _ = init_vector_store_manager()
-proc = WebScrapeProcessor()
-result = proc.fetch_url_and_ingest(
-    'https://www.acibadem.edu.tr/en',
-    title='Acibadem University Homepage',
-    source_tag='acibadem_homepage'
-)
-print('RESULT:', result)
-if result['status'] == 'ingested' and result['chunk_count'] > 0:
-    chunks = proc.split_documents_into_chunks([proc.fetch_url('https://www.acibadem.edu.tr/en')])
-    ok = vsm.add_chunks(chunks)
-    print('VECTOR_STORE_ADD:', ok)
-"
-```
-
-Expected: `RESULT: {'status': 'ingested', 'url': 'https://www.acibadem.edu.tr/en', 'title': 'Acibadem University Homepage', 'chunk_count': N}` where N > 0. If the URL fails to fetch (e.g., blocked by the server), try an alternative university URL or a Wikipedia page about the university.
-
-- [ ] **Step 4: Commit**
-
-```bash
-git add backend/rag/web_scrape_processor.py backend/requirements.txt
-git commit -m "feat(rag): add URL scraper with BeautifulSoup to WebScrapeProcessor"
-```
+- [x] **Step 1: Add dependencies to pyproject.toml** — `beautifulsoup4>=4.12`, `requests>=2.31`, `lxml>=5.0`, `langchain-text-splitters>=1.0.0`
+- [x] **Step 2: Implement `fetch_drupal_page()`** — fetches Drupal CMS pages, extracts `<main>` content, strips boilerplate via tag names + CSS selectors
+- [x] **Step 3: Implement `fetch_bologna_static_page()`** — fetches `dynConPage.aspx` pages; preserves content-bearing `<form>` tags (critical for ASP.NET WebForms)
+- [x] **Step 4: Implement `fetch_bologna_program_listing()`** — parses `unitSelection.aspx` to discover all programs and extract `curUnit`/`curSunit` IDs
+- [x] **Step 5: Implement `fetch_bologna_program_detail()`** — fetches program subpages (`progAbout.aspx`, `progAdmissionReq.aspx`, etc.)
+- [x] **Step 6: Verify** — `docker compose exec backend python rag/scrape_runner.py --max-programs 1`
 
 ---
 
@@ -672,7 +544,7 @@ git commit -m "feat(rag): add URL scraper with BeautifulSoup to WebScrapeProcess
 **Files:**
 - Modify: `backend/api_v1/views.py` (lines 436-455, the item processing loop in `ingest`)
 
-- [ ] **Step 1: Update the ingest view to handle `url` type items**
+- [x] **Step 1: Update the ingest view to handle `url` type items**
 
 Open `backend/api_v1/views.py` and replace lines 436 through 455 (the `for item in items:` loop and the `if documents_payload:` block) with:
 
@@ -713,15 +585,15 @@ Open `backend/api_v1/views.py` and replace lines 436 through 455 (the `for item 
                 pass
 ```
 
-- [ ] **Step 2: Run the ingest tests to verify url-type handling doesn't break existing flow**
+- [x] **Step 2: Run the ingest tests to verify url-type handling doesn't break existing flow**
 
 ```bash
-docker compose exec django-web python manage.py test api_v1.tests.test_ingest_service_token api_v1.tests.test_access_control -v 2
+docker compose exec backend python manage.py test api_v1.tests.test_ingest_service_token api_v1.tests.test_access_control -v 2
 ```
 
 Expected: All existing ingest tests pass. The URL-type path is exercised when the scraper is reachable; when not, it silently skips.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add backend/api_v1/views.py
@@ -732,18 +604,18 @@ git commit -m "feat(api): wire URL-type ingest items through WebScrapeProcessor"
 
 ## Task 1.7: Sprint 1 integration test
 
-- [ ] **Step 1: Run full backend test suite**
+- [x] **Step 1: Run full backend test suite**
 
 ```bash
-docker compose exec django-web python manage.py test api_v1.tests -v 2 2>&1 | tail -40
+docker compose exec backend python manage.py test api_v1.tests -v 2 2>&1 | tail -40
 ```
 
 Expected: All 32 tests pass (30 existing + 2 new citation tests).
 
-- [ ] **Step 2: End-to-end chat test with citations**
+- [x] **Step 2: End-to-end chat test with citations**
 
 ```bash
-docker compose exec django-web python -c "
+docker compose exec backend python -c "
 import json, urllib.request
 req = urllib.request.Request(
     'http://localhost:8000/api/v1/chat',
@@ -762,7 +634,7 @@ for c in resp['data']['message']['citations']:
 
 Expected: `CITATION_COUNT` >= 1, each citation has `citation_id`, `title`, `snippet`. The RAG pipeline returns citations from the demo seed data or any previously ingested content.
 
-- [ ] **Step 3: Sprint 1 final commit (if any uncommitted changes)**
+- [x] **Step 3: Sprint 1 final commit (if any uncommitted changes)**
 
 ```bash
 git status
@@ -774,156 +646,38 @@ git commit -m "chore: Sprint 1 integration validation complete"
 
 # Sprint 2: Web Scraping Pipeline + Evaluation Framework
 
-**Goal:** Scrape 3-5 real university pages, add retrieval confidence thresholds with fallback responses, build a reusable evaluation runner, and score the system against the 10-question evaluation set from the proposal.
+**Goal:** Scrape 50+ university pages across two site architectures (Drupal CMS + ASP.NET/Bologna), add retrieval confidence thresholds with fallback responses, build a reusable evaluation runner, and score the system against the 15-question evaluation set.
 
-## Task 2.1: Build multi-page scraper script
+## Task 2.1: Create comprehensive scrape targets and batch runner
+
+**Status:** DONE
 
 **Files:**
-- Create: `backend/rag/scrape_targets.py`
-- Modify: `backend/rag/__init__.py` (ensure module exports)
+- Create: `backend/rag/scrape_targets.py` — complete URL inventory for both sites
+- Create: `backend/rag/scrape_runner.py` — three-phase batch orchestrator with CLI
 
-- [ ] **Step 1: Create the scrape targets configuration**
+**scrape_targets.py** documents all URLs discovered through Playwright exploration (2026-05-04):
 
-Create `backend/rag/scrape_targets.py`:
+| Group | Count | Description |
+|-------|-------|-------------|
+| `DRUPAL_PAGES` | 14 | Main site pages: admissions, programs, tuition, campus life, student services, research |
+| `BOLOGNA_STATIC_PAGES` | 15 | Info package static pages: institution info (5), student info (8), Erasmus (1), Bologna Process (1) |
+| `BOLOGNA_DEGREE_LEVELS` | 4 | Program listing pages: Associate's, Bachelor's, Master's, Doctorate |
+| `BOLOGNA_PROGRAM_SUBPAGES` | 17 | Per-program detail pages: admission reqs, learning outcomes, course structure, academic staff, etc. |
 
-```python
-"""Pre-configured scrape targets for Acibadem University and related sources."""
+Helper functions: `build_drupal_full_urls()`, `build_bologna_static_urls()`, `build_bologna_unit_selection_urls()`, `build_program_detail_url()`, `build_program_landing_url()`
 
-SCRAPE_TARGETS = [
-    {
-        "url": "https://www.acibadem.edu.tr/en",
-        "title": "Acibadem University Homepage",
-        "source_tag": "acibadem_homepage",
-    },
-    {
-        "url": "https://www.acibadem.edu.tr/en/prospective-students",
-        "title": "Prospective Students — Acibadem University",
-        "source_tag": "acibadem_prospective",
-    },
-    {
-        "url": "https://www.acibadem.edu.tr/en/life-at-acibadem",
-        "title": "Campus Life — Acibadem University",
-        "source_tag": "acibadem_campus",
-    },
-    {
-        "url": "https://obs.acibadem.edu.tr",
-        "title": "Bologna Information System — Acibadem University",
-        "source_tag": "acibadem_bologna",
-    },
-    {
-        "url": "https://www.acibadem.edu.tr/en/academics",
-        "title": "Academics — Acibadem University",
-        "source_tag": "acibadem_academics",
-    },
-]
-```
+**scrape_runner.py** orchestrates three phases:
+1. `scrape_drupal_pages()` — fetches 14 Drupal pages, chunks, adds to vector store
+2. `scrape_bologna_static()` — fetches 15 Bologna static `dynConPage.aspx` pages
+3. `scrape_bologna_programs()` — discovers programs from `unitSelection.aspx` listings, then fetches 17 detail subpages per program (~104 programs × 17 = ~1768 detail pages)
 
-- [ ] **Step 2: Create the batch scraper script**
+CLI flags: `--dry-run`, `--drupal-only`, `--bologna-only`, `--max-programs N`, `--report PATH`
+Auto-saves JSON report to `backend/logs/scrape_report.json`
 
-Create `backend/rag/scrape_runner.py`:
-
-```python
-"""Batch scraper: fetch all pre-configured targets and ingest into the vector store."""
-
-import os
-import sys
-from pathlib import Path
-
-# Allow running this script directly
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-
-from rag.vector_store import init_vector_store_manager
-from rag.web_scrape_processor import WebScrapeProcessor
-from rag.scrape_targets import SCRAPE_TARGETS
-from printmeup import printmeup as pm
-
-
-def run_batch_scrape() -> dict:
-    """Scrape all targets and return summary stats."""
-    vsm, _ = init_vector_store_manager()
-    processor = WebScrapeProcessor()
-
-    stats = {
-        "total_targets": len(SCRAPE_TARGETS),
-        "ingested": 0,
-        "failed": 0,
-        "total_chunks": 0,
-        "details": [],
-    }
-
-    for target in SCRAPE_TARGETS:
-        pm.inf(f"Processing: {target['title']} ({target['url']})")
-        doc = processor.fetch_url(
-            url=target["url"],
-            title=target["title"],
-            source_tag=target["source_tag"],
-        )
-
-        if doc is None:
-            stats["failed"] += 1
-            stats["details"].append({"url": target["url"], "status": "failed"})
-            continue
-
-        chunks = processor.split_documents_into_chunks([doc])
-        if not chunks:
-            stats["failed"] += 1
-            stats["details"].append({"url": target["url"], "status": "no_chunks_produced"})
-            continue
-
-        ok = vsm.add_chunks(chunks)
-        if ok:
-            stats["ingested"] += 1
-            stats["total_chunks"] += len(chunks)
-            stats["details"].append({
-                "url": target["url"],
-                "title": target["title"],
-                "status": "ingested",
-                "chunk_count": len(chunks),
-            })
-        else:
-            stats["failed"] += 1
-            stats["details"].append({"url": target["url"], "status": "vector_store_add_failed"})
-
-    pm.suc(f"Batch scrape complete: {stats['ingested']} ingested, {stats['failed']} failed, {stats['total_chunks']} chunks")
-    return stats
-
-
-if __name__ == "__main__":
-    result = run_batch_scrape()
-    import json
-    print(json.dumps(result, indent=2))
-```
-
-- [ ] **Step 3: Run the batch scraper**
-
-```bash
-docker compose exec django-web python rag/scrape_runner.py
-```
-
-Expected: At least 2 of the 5 targets succeed in ingestion. The output prints a JSON summary with `ingested` count > 0.
-
-- [ ] **Step 4: Verify content is searchable**
-
-```bash
-docker compose exec django-web python -c "
-from rag.vector_store import init_vector_store_manager
-_, retriever = init_vector_store_manager()
-docs = retriever.invoke('What programs does Acibadem University offer?')
-print('Retrieved', len(docs), 'documents')
-for doc in docs[:3]:
-    print('  Source:', doc.metadata.get('source', 'Unknown'))
-    print('  Preview:', doc.page_content[:120])
-"
-```
-
-Expected: At least 1 document returned with content from the scraped pages (not the demo seed).
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add backend/rag/scrape_targets.py backend/rag/scrape_runner.py
-git commit -m "feat(rag): add batch scraper with 5 pre-configured university targets"
-```
+- [x] **Step 1: Create `scrape_targets.py`** — all URLs documented with categories and helper builders
+- [x] **Step 2: Create `scrape_runner.py`** — three-phase orchestrator with `BatchStats` tracking, argparse CLI, JSON reports
+- [x] **Step 3: Verify** — `docker compose exec backend python rag/scrape_runner.py --max-programs 1`
 
 ---
 
@@ -932,7 +686,7 @@ git commit -m "feat(rag): add batch scraper with 5 pre-configured university tar
 **Files:**
 - Already done in Task 1.1 — the `generate_chat_answer` function now checks `RAG_CONFIDENCE_THRESHOLD` and returns a fallback message when confidence is below threshold. Verify and document.
 
-- [ ] **Step 1: Add RAG_CONFIDENCE_THRESHOLD to .env.example**
+- [x] **Step 1: Add RAG_CONFIDENCE_THRESHOLD to .env.example**
 
 Open `.env.example` and append at the end:
 
@@ -947,10 +701,10 @@ Open `.env` (or create if absent) and add the same line:
 RAG_CONFIDENCE_THRESHOLD=0.3
 ```
 
-- [ ] **Step 2: Test fallback behavior with an obscure question**
+- [x] **Step 2: Test fallback behavior with an obscure question**
 
 ```bash
-docker compose exec django-web python -c "
+docker compose exec backend python -c "
 from rag.api_views import generate_chat_answer
 result = generate_chat_answer('What is the quantum chromodynamics of dark matter in perpetual motion machines?')
 print('ANSWER:', result['answer'])
@@ -961,7 +715,7 @@ print('CITATIONS:', len(result.get('citation_entries', [])))
 
 Expected: The answer should be the fallback text ("I could not find reliable information..."), confidence should be 0.0 or very low, and citations should be empty. The LLM should not hallucinate.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add .env.example .env 2>/dev/null; git add backend/rag/api_views.py
@@ -975,7 +729,7 @@ git commit -m "feat(rag): add confidence threshold with fallback response for we
 **Files:**
 - Create: `backend/rag/evaluation.py`
 
-- [ ] **Step 1: Create the evaluation runner**
+- [x] **Step 1: Create the evaluation runner**
 
 Create `backend/rag/evaluation.py`:
 
@@ -997,65 +751,101 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from rag.api_views import generate_chat_answer
 
 EVALUATION_QUESTIONS = [
+    # --- Admissions ---
     {
         "id": "q1",
-        "question": "What are the tuition payment deadlines?",
+        "question": "What are the admission requirements for international students at Acibadem University?",
         "expected_accuracy": "correct_grounded",
-        "category": "finance",
+        "category": "admissions",
     },
     {
         "id": "q2",
-        "question": "What are the library opening hours on weekdays?",
+        "question": "Is there an English proficiency requirement (TOEFL/IELTS) for programs taught in English?",
         "expected_accuracy": "correct_grounded",
-        "category": "campus_services",
+        "category": "admissions",
     },
     {
         "id": "q3",
-        "question": "How can I request an AWS ACU quota extension?",
+        "question": "What is the application deadline for the fall semester?",
         "expected_accuracy": "correct_grounded",
-        "category": "aws_acu",
+        "category": "admissions",
     },
+    # --- Programs ---
     {
         "id": "q4",
-        "question": "Who can access the ingest endpoint in API v1?",
+        "question": "What undergraduate programs does Acibadem University offer in English?",
         "expected_accuracy": "correct_grounded",
-        "category": "api_access",
+        "category": "programs",
     },
     {
         "id": "q5",
-        "question": "Can anonymous users submit feedback on assistant messages?",
+        "question": "Does Acibadem University have a Medicine program? What is its duration?",
         "expected_accuracy": "correct_grounded",
-        "category": "api_access",
+        "category": "programs",
     },
     {
         "id": "q6",
-        "question": "How does rate limiting work for chat requests?",
+        "question": "What is the difference between Turkish-medium and English-medium programs?",
         "expected_accuracy": "correct_grounded",
-        "category": "api_access",
+        "category": "programs",
     },
+    # --- Tuition & Scholarships ---
     {
         "id": "q7",
-        "question": "What data is stored for each chat session?",
+        "question": "What is the annual tuition fee for the Medicine program?",
         "expected_accuracy": "correct_grounded",
-        "category": "api_access",
+        "category": "tuition",
     },
     {
         "id": "q8",
-        "question": "What should I do if no citation is available for an answer?",
-        "expected_accuracy": "safe_transparent",
-        "category": "safety",
+        "question": "Does Acibadem University offer merit-based scholarships? What are the conditions?",
+        "expected_accuracy": "correct_grounded",
+        "category": "tuition",
     },
+    # --- Campus & Student Life ---
     {
         "id": "q9",
-        "question": "Where can I find source drill-down details by source id?",
+        "question": "Does Acibadem University provide on-campus housing or dormitories?",
         "expected_accuracy": "correct_grounded",
-        "category": "api_access",
+        "category": "campus_life",
     },
     {
         "id": "q10",
-        "question": "What is the difference between chat answer generation and retrieval?",
+        "question": "Where is Acibadem University located? What is the campus address?",
         "expected_accuracy": "correct_grounded",
-        "category": "system_understanding",
+        "category": "campus_life",
+    },
+    # --- Student Services ---
+    {
+        "id": "q11",
+        "question": "How does the course registration process work?",
+        "expected_accuracy": "correct_grounded",
+        "category": "student_services",
+    },
+    {
+        "id": "q12",
+        "question": "Does the university have a library? What are its hours and online resources?",
+        "expected_accuracy": "correct_grounded",
+        "category": "student_services",
+    },
+    # --- Edge Cases ---
+    {
+        "id": "q13",
+        "question": "What is the best university in Turkey?",
+        "expected_accuracy": "safe_transparent",
+        "category": "edge_case",
+    },
+    {
+        "id": "q14",
+        "question": "How do I apply for a Schengen visa?",
+        "expected_accuracy": "safe_transparent",
+        "category": "edge_case",
+    },
+    {
+        "id": "q15",
+        "question": "Tell me everything you know about Acibadem University.",
+        "expected_accuracy": "correct_grounded",
+        "category": "edge_case",
     },
 ]
 
@@ -1155,44 +945,44 @@ if __name__ == "__main__":
     run_evaluation(output_path=out)
 ```
 
-- [ ] **Step 2: Run the evaluation**
+- [x] **Step 2: Run the evaluation**
 
 ```bash
-docker compose exec django-web python rag/evaluation.py
+docker compose exec backend python rag/evaluation.py
 ```
 
-Expected: The script prints scores for all 10 questions. The actual scores depend on what content is in the vector store. If only the 4 demo seed documents + scraped pages exist, expect mostly "partially_correct" or "incorrect_unsupported" since the demo data doesn't cover tuition deadlines, library hours, etc. This is expected — the evaluation identifies content gaps for the scraping pipeline to address.
+Expected: The script prints scores for all 15 questions. The actual scores depend on what content is in the vector store. If only the 4 demo seed documents + scraped pages exist, expect mostly "partially_correct" or "incorrect_unsupported" since the demo data doesn't cover admissions, tuition, campus life, etc. This is expected — the evaluation identifies content gaps for the scraping pipeline to address.
 
-- [ ] **Step 3: Review evaluation output**
+- [x] **Step 3: Review evaluation output**
 
 ```bash
 cat backend/logs/evaluation_results.json | python -m json.tool | head -60
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add backend/rag/evaluation.py backend/logs/evaluation_results.json 2>/dev/null
-git commit -m "feat(eval): add evaluation runner with 10-question set and scoring rubric"
+git commit -m "feat(eval): add evaluation runner with 15-question set and scoring rubric"
 ```
 
 ---
 
 ## Task 2.4: Sprint 2 integration test
 
-- [ ] **Step 1: Run backend test suite**
+- [x] **Step 1: Run backend test suite**
 
 ```bash
-docker compose exec django-web python manage.py test api_v1.tests -v 2 2>&1 | tail -10
+docker compose exec backend python manage.py test api_v1.tests -v 2 2>&1 | tail -10
 ```
 
 Expected: All 32 tests pass.
 
-- [ ] **Step 2: Verify scraper + citations + evaluation all work together**
+- [x] **Step 2: Verify scraper + citations + evaluation all work together**
 
 ```bash
-docker compose exec django-web bash -c "
-python rag/scrape_runner.py && \
+docker compose exec backend bash -c "
+python rag/scrape_runner.py --max-programs 1 && \
 python rag/evaluation.py && \
 python -c \"
 from rag.api_views import generate_chat_answer
@@ -1202,7 +992,7 @@ print('CONFIDENCE:', r.get('confidence', 0))
 \""
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add -A && git commit -m "chore: Sprint 2 integration validation complete"
@@ -1385,7 +1175,7 @@ urlpatterns = [
 - [x] **Step 3: Test the auth endpoints**
 
 ```bash
-docker compose exec django-web python -c "
+docker compose exec backend python -c "
 import json, urllib.request
 
 # Test register
@@ -2558,7 +2348,7 @@ from . import admin_views
 - [x] **Step 3: Test admin dashboard**
 
 ```bash
-docker compose exec django-web python -c "
+docker compose exec backend python -c "
 from django.contrib.auth import get_user_model
 User = get_user_model()
 if not User.objects.filter(username='staff', is_staff=True).exists():
@@ -2586,7 +2376,7 @@ git commit -m "feat(api): add admin dashboard endpoint with system stats"
 - [x] **Step 1: Run full test suite**
 
 ```bash
-docker compose exec django-web python manage.py test api_v1.tests -v 2 2>&1 | tail -10
+docker compose exec backend python manage.py test api_v1.tests -v 2 2>&1 | tail -10
 ```
 
 Expected: All tests pass.
@@ -2594,7 +2384,7 @@ Expected: All tests pass.
 - [x] **Step 2: Verify auth flow end-to-end**
 
 ```bash
-docker compose exec django-web python manage.py test api_v1.tests.test_access_control -v 2
+docker compose exec backend python manage.py test api_v1.tests.test_access_control -v 2
 ```
 
 - [x] **Step 3: Verify frontend build**
@@ -2637,7 +2427,7 @@ daphne>=4.0
 Install in the container:
 
 ```bash
-docker compose exec django-web pip install channels daphne
+docker compose exec backend pip install channels daphne
 ```
 
 - [ ] **Step 2: Configure ASGI and Channels in settings**
@@ -3265,7 +3055,7 @@ class SuccessEnvelopeContractTests(TestCase):
 - [ ] **Step 2: Run the new tests**
 
 ```bash
-docker compose exec django-web python manage.py test api_v1.tests.test_response_contract.SuccessEnvelopeContractTests -v 2
+docker compose exec backend python manage.py test api_v1.tests.test_response_contract.SuccessEnvelopeContractTests -v 2
 ```
 
 Expected: 5 tests pass.
@@ -3284,7 +3074,7 @@ git commit -m "test(api): add success envelope contract tests for all 5 endpoint
 - [ ] **Step 1: Run full backend test suite**
 
 ```bash
-docker compose exec django-web python manage.py test api_v1.tests -v 2 2>&1 | tail -15
+docker compose exec backend python manage.py test api_v1.tests -v 2 2>&1 | tail -15
 ```
 
 Expected: All 37+ tests pass (32 from earlier sprints + 5 new success envelope tests).
@@ -3586,16 +3376,16 @@ docker compose exec -T db psql -U postgres acu_chatbot < backup_pg_20260501.sql
 ### Backup
 
 ```bash
-docker compose exec django-web tar -czf /tmp/chromadb-backup.tar.gz -C /app chromadb-data
-docker compose cp django-web:/tmp/chromadb-backup.tar.gz ./chromadb-backup_$(date +%Y%m%d).tar.gz
+docker compose exec backend tar -czf /tmp/chromadb-backup.tar.gz -C /var/lib chromadb
+docker compose cp backend:/tmp/chromadb-backup.tar.gz ./chromadb-backup_$(date +%Y%m%d).tar.gz
 ```
 
 ### Restore
 
 ```bash
-docker compose exec django-web rm -rf /app/chromadb-data
+docker compose exec backend rm -rf /var/lib/chromadb
 tar -xzf chromadb-backup_20260501.tar.gz -C backend/
-docker compose restart django-web
+docker compose restart backend
 ```
 
 ## Ollama Models
@@ -3622,8 +3412,8 @@ echo "Backing up PostgreSQL..."
 docker compose exec -T db pg_dump -U postgres acu_chatbot > "$BACKUP_DIR/pg_${DATE_TAG}.sql"
 
 echo "Backing up Chroma vector store..."
-docker compose exec django-web tar -czf /tmp/chromadb-backup.tar.gz -C /app chromadb-data
-docker compose cp django-web:/tmp/chromadb-backup.tar.gz "$BACKUP_DIR/chromadb_${DATE_TAG}.tar.gz"
+docker compose exec backend tar -czf /tmp/chromadb-backup.tar.gz -C /var/lib chromadb
+docker compose cp backend:/tmp/chromadb-backup.tar.gz "$BACKUP_DIR/chromadb_${DATE_TAG}.tar.gz"
 
 echo "Backup complete: $BACKUP_DIR"
 ls -lh "$BACKUP_DIR"/*${DATE_TAG}*
@@ -3727,7 +3517,7 @@ Expected: Clean build, no warnings.
 - [ ] **Step 4: Final backend test run**
 
 ```bash
-docker compose exec django-web python manage.py test api_v1.tests -v 2 2>&1 | tail -15
+docker compose exec backend python manage.py test api_v1.tests -v 2 2>&1 | tail -15
 ```
 
 Expected: All tests pass.
@@ -3756,25 +3546,25 @@ Expected: All 4 services show `(healthy)`.
 - [ ] **Step 2: Run batch scraper to populate content**
 
 ```bash
-docker compose exec django-web python rag/scrape_runner.py
+docker compose exec backend python rag/scrape_runner.py
 ```
 
 - [ ] **Step 3: Run evaluation**
 
 ```bash
-docker compose exec django-web python rag/evaluation.py
+docker compose exec backend python rag/evaluation.py
 ```
 
 - [ ] **Step 4: Run full test suite**
 
 ```bash
-docker compose exec django-web python manage.py test api_v1.tests -v 2
+docker compose exec backend python manage.py test api_v1.tests -v 2
 ```
 
 - [ ] **Step 5: Test chat endpoint with citations**
 
 ```bash
-docker compose exec django-web python -c "
+docker compose exec backend python -c "
 import json, urllib.request
 for q in ['What is Acibadem University?', 'Tell me about student life', 'What programs are offered?']:
     req = urllib.request.Request(
@@ -3820,7 +3610,7 @@ git add -A && git commit -m "chore: final integration validation — all 5 sprin
 | Sprint | Focus | Tasks | Key Deliverable |
 |--------|-------|-------|-----------------|
 | Sprint 1 | Citation + health + scraper | 7 | Chat returns real citations, containers start reliably |
-| Sprint 2 | Scraping + evaluation | 4 | 5 scraped pages, 10-question eval with scores |
+| Sprint 2 | Scraping + evaluation | 4 | Dual-site scraper (50+ targets), 15-question eval with scores |
 | Sprint 3 | Auth + sessions + admin | 6 | Login page, session sidebar, admin dashboard |
 | Sprint 4 | Streaming + CI/CD + tests | 6 | WebSocket tokens, GitHub Actions, contract tests |
 | Sprint 5 | Polish + report | 7 | Markdown, pagination, persistence, backup docs, appendix |

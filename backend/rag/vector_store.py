@@ -1,39 +1,49 @@
-import asyncio
+import os
+from typing import List
 
 from langchain_core.documents import Document
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_ollama import OllamaEmbeddings
 from langchain_chroma import Chroma
 from langchain_core.vectorstores import VectorStoreRetriever
-from typing import List
-import os
-
-from .web_scrape_processor import WebScrapeProcessor 
 
 from logging import getLogger
+
 logger = getLogger(__name__)
 
-VECTOR_STORE_PERSIST_DIR = os.getenv("VECTOR_STORE_PERSIST_DIR", "chromadb-data")
-HGF_EMBEDDING_MODEL_ID = os.getenv("HGF_EMBEDDING_MODEL_ID", "BAAI/bge-small-en-v1.5")
+VECTOR_STORE_PERSIST_DIR = os.getenv("VECTOR_STORE_PERSIST_DIR", "/var/lib/chromadb")
+OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://ollama:11434")
+OLLAMA_EMBEDDING_MODEL_ID = os.getenv(
+    "OLLAMA_EMBEDDING_MODEL_ID", "nomic-embed-text-v2-moe"
+)
+
 
 class VectorStoreManager:
+    """Manages ChromaDB vector store using Ollama for embeddings.
+
+    Embedding inference runs on the Ollama service (GPU-accelerated if available).
+    No model downloads — Ollama handles everything via its HTTP API.
+    """
+
     def __init__(
         self,
         persist_directory: str = VECTOR_STORE_PERSIST_DIR,
-        hgf_embedding_model_id: str = HGF_EMBEDDING_MODEL_ID,
+        embedding_model_id: str = OLLAMA_EMBEDDING_MODEL_ID,
+        base_url: str = OLLAMA_BASE_URL,
     ):
         self.persist_directory = persist_directory
-        self.embeddings = HuggingFaceEmbeddings(
-            model_name=hgf_embedding_model_id, model_kwargs={"trust_remote_code": True}
+        self.embeddings = OllamaEmbeddings(
+            model=embedding_model_id,
+            base_url=base_url,
         )
-        self.web_scrape_processor = WebScrapeProcessor()
         self.vectorstore = self.get_vector_store()
 
     def load_vectorstore(self) -> Chroma | None:
         """Load existing vector store from persist directory."""
         try:
             if os.path.exists(self.persist_directory):
-                logger.debug(
-                    f"Loading existing Chroma database from {self.persist_directory}..."
+                logger.info(
+                    "Loading existing Chroma database from %s...",
+                    self.persist_directory,
                 )
                 self.vectorstore = Chroma(
                     persist_directory=self.persist_directory,
@@ -42,24 +52,31 @@ class VectorStoreManager:
                 logger.info("Existing vector store loaded")
                 return self.vectorstore
             else:
-                logger.debug(f"No existing vector store found at {self.persist_directory}")
+                logger.info("No existing vector store found at %s", self.persist_directory)
                 return None
         except Exception as e:
-            logger.error(e)
+            logger.error("Failed to load vector store: %s (%s)", type(e).__name__, e)
             return None
 
     def create_vectorstore(self, chunks: List[Document] | None = None) -> Chroma:
-        """Create vector store from chunks."""
-        doc_count = None
-        if not chunks or len(chunks) == 0:
-            chunks, doc_count = self.web_scrape_processor.process_all_documents()
+        """Create a new vector store from chunks.
 
-        logger.info(
-            f"Creating new vector store at {self.persist_directory}, with {len(chunks)} chunks"
-            + f" from {doc_count} documents."
-            if doc_count
-            else ""
-        )
+        If no chunks are provided, demo seed documents are used as fallback.
+        """
+        if not chunks or len(chunks) == 0:
+            from .web_scrape_processor import WebScrapeProcessor
+            processor = WebScrapeProcessor()
+            chunks, doc_count = processor.process_all_documents()
+            logger.info(
+                "Creating new vector store from %d demo documents (%d chunks)",
+                doc_count, len(chunks),
+            )
+        else:
+            logger.info(
+                "Creating new vector store at %s with %d chunks",
+                self.persist_directory, len(chunks),
+            )
+
         self.vectorstore = Chroma.from_documents(
             documents=chunks,
             embedding=self.embeddings,
@@ -90,50 +107,30 @@ class VectorStoreManager:
             return False
 
         try:
-            logger.debug(f"Adding {len(chunks)} new chunks to existing vector store...")
+            logger.info("Adding %d new chunks to existing vector store...", len(chunks))
             self.vectorstore.add_documents(chunks)
-            logger.debug(f"{len(chunks)} chunks added to vector store")
+            logger.info("%d chunks added to vector store", len(chunks))
             return True
         except Exception as e:
-            logger.error("Failed to add documents to vector store")
+            logger.error("Failed to add documents to vector store: %s (%s)",
+                         type(e).__name__, e)
             return False
-
-    def add_documents(self, documents: List[Document]) -> bool:
-        logger.debug(f"Adding {len(documents)} new documents to vector store...")
-        return self.add_chunks(self.web_scrape_processor.split_documents_into_chunks(documents))
-
-    def similarity_search(self, query: str, k: int = 4) -> List[Document] | None:
-        """Perform a similarity search on the vector store.
-
-        Args:
-            query (str): The query string to search for.
-            k (int, optional): The number of similar documents to return. Defaults to 4.
-        Returns:
-            List[Document] | None: List of similar documents or None if vector store is not loaded.
-        """
-
+    def similarity_search(self, query: str, k: int = 4) -> List[Document]:
+        """Perform a similarity search on the vector store."""
         return self.vectorstore.similarity_search(query, k=k)
 
     def get_retriever(self, k: int = 4) -> VectorStoreRetriever:
+        """Return a retriever configured for similarity search."""
         return self.vectorstore.as_retriever(
             search_type="similarity", search_kwargs={"k": k}
         )
 
+
 def init_vector_store_manager():
+    """Initialize the vector store manager and return it with a retriever."""
     vsm = VectorStoreManager(
         persist_directory=VECTOR_STORE_PERSIST_DIR,
-        hgf_embedding_model_id=HGF_EMBEDDING_MODEL_ID,
+        embedding_model_id=OLLAMA_EMBEDDING_MODEL_ID,
+        base_url=OLLAMA_BASE_URL,
     )
     return vsm, vsm.get_retriever(k=3)
-
-#async def init_vector_store_manager(app):
-#    loop = asyncio.get_event_loop()
-#    vsm = await loop.run_in_executor(
-#        None,
-#        VectorStoreManager,
-#        VECTOR_STORE_PERSIST_DIR,
-#        HGF_EMBEDDING_MODEL_ID,
-#    )
-#    app.state.vsm = vsm
-#    app.state.retriever = vsm.get_retriever(k=3)
-#    pm.suc("Vector store initialized")

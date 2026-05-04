@@ -22,6 +22,9 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 RUN useradd -m -r appuser && \
     chown -R appuser /app
 
+# Pre-create the ChromaDB directory and set ownership inside the image
+RUN mkdir -p /var/lib/chromadb && chown -R appuser:appuser /var/lib/chromadb
+
 # Copy application code securely
 COPY --chown=appuser:appuser . .
 

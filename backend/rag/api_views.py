@@ -27,7 +27,10 @@ def _docs_to_sources(docs: list[Document]) -> list[dict]:
     seen: set[str] = set()
     for doc in docs[:5]:
         source_name = str(doc.metadata.get("source", doc.metadata.get("url", "Unknown")))
+        url = str(doc.metadata.get("url", source_name if source_name.startswith("http") else ""))
         page = str(doc.metadata.get("page", ""))
+        title = str(doc.metadata.get("title", source_name.split("/")[-1] or "Untitled"))
+        ingestion_type = str(doc.metadata.get("ingestion_type", ""))
         key = f"{source_name}:{page}"
         if key in seen:
             continue
@@ -35,8 +38,11 @@ def _docs_to_sources(docs: list[Document]) -> list[dict]:
         sources.append(
             {
                 "source": source_name,
+                "url": url,
+                "title": title,
                 "page": page,
-                "content": doc.page_content[:200],
+                "content": doc.page_content[:300],
+                "ingestion_type": ingestion_type,
             }
         )
     return sources
