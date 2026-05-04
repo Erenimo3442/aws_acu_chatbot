@@ -110,25 +110,32 @@ def generate_chat_answer(question: str) -> dict:
         temperature=0,
     )
 
-    response = model.invoke(
-        [
-            SystemMessage(
-                content=(
-                    "You are an academic assistant for Acibadem University. "
-                    "Answer using the provided context. If context is insufficient, say that clearly. "
-                    "Keep the answer concise and factual."
-                )
-            ),
-            HumanMessage(
-                content=(
-                    f"Question: {cleaned_question}\n\n"
-                    f"Context:\n{context_text}\n\n"
-                    "Provide a helpful answer and refer to source names naturally."
-                )
-            ),
-        ]
-    )
-    answer_text = str(getattr(response, "content", "")).strip()
+    try:
+        response = model.invoke(
+            [
+                SystemMessage(
+                    content=(
+                        "You are an academic assistant for Acibadem University. "
+                        "Answer using the provided context. If context is insufficient, say that clearly. "
+                        "Keep the answer concise and factual."
+                    )
+                ),
+                HumanMessage(
+                    content=(
+                        f"Question: {cleaned_question}\n\n"
+                        f"Context:\n{context_text}\n\n"
+                        "Provide a helpful answer and refer to source names naturally."
+                    )
+                ),
+            ]
+        )
+        answer_text = str(getattr(response, "content", "")).strip()
+    except Exception as e:
+        # Graceful fallback if Ollama model is down or timeouts
+        answer_text = (
+            "I'm sorry, I am currently experiencing technical difficulties and cannot connect to the brain model. "
+            "Please try asking your question again in a few minutes."
+        )
 
     return {
         "question": cleaned_question,
