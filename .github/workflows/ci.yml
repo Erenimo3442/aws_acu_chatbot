@@ -45,13 +45,18 @@ jobs:
       - name: Run Django tests
         working-directory: ./backend
         env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/chatbot_test
-          SECRET_KEY: test-secret-key-for-ci
-          DEBUG: "False"
+          DJANGO_SECRET_KEY: test-secret-key-for-ci-pipeline
+          DEBUG: "0"
+          DATABASE_ENGINE: postgresql
+          DATABASE_NAME: chatbot_test
+          DATABASE_USERNAME: postgres
+          DATABASE_PASSWORD: postgres
+          DATABASE_HOST: localhost
+          DATABASE_PORT: 5432
           OLLAMA_BASE_URL: http://localhost:11434
           OLLAMA_CHAT_MODEL: qwen2.5:3b
           OLLAMA_EMBEDDING_MODEL: nomic-embed-text-v2-moe
-        run: uv run python manage.py test --settings=chatbot.settings
+        run: uv run python manage.py test
 
   frontend-test:
     name: Frontend Tests
